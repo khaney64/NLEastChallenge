@@ -12,9 +12,9 @@ public class DivisionData
 
     public TeamData[]? Teams { get; set; }
 
-    internal static DivisionDataVm GetData(DivisionData[] configuredData)
+    internal static DivisionDataVm GetData(DivisionData[] configuredData, ILogger logger)
     {
-        var actual = FetchActual();
+        var actual = FetchActual(logger);
         if (actual is null)
             return new DivisionDataVm();
 
@@ -151,15 +151,18 @@ public class DivisionData
         return footers;
     }
 
-    private static DivisionData? FetchActual()
+    private static DivisionData? FetchActual(ILogger logger)
     {
         var standings = "https://statsapi.mlb.com/api/v1/standings";
         var actual = standings
             .SetQueryParam("leagueId", "104")
             .SetQueryParam("season", "2022")
-            .GetJsonAsync<Root>().Result;
+            .GetJsonAsync<Root>()
+            .Result;
 
-        var nlEast = actual.Records.Where(r => r.Division.Id == 204).FirstOrDefault()?.TeamRecords;
+        logger.LogTrace($"fetch standings {standings} leagueId 104 season 2022");
+
+        var nlEast = actual.Records.FirstOrDefault(r => r.Division.Id == 204)?.TeamRecords;
 
         if (nlEast is null)
             return null;

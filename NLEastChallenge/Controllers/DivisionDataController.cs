@@ -18,7 +18,7 @@ namespace NLEastChallenge.Controllers
         [HttpGet]
         public DivisionDataVm Get()
         {
-            return DivisionData.GetData(configuredData);
+            return DivisionData.GetData(configuredData, logger);
         }
     }
 }
