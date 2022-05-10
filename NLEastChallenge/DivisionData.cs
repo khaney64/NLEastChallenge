@@ -2,7 +2,7 @@
 using Flurl;
 using Flurl.Http;
 
-namespace NetCoreReact;
+namespace NLEastChallenge;
 
 public class DivisionData
 {

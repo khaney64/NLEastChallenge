@@ -1,4 +1,4 @@
-﻿namespace NetCoreReact;
+﻿namespace NLEastChallenge;
 public class TeamData
 {
     public string Team { get; set; } = string.Empty;

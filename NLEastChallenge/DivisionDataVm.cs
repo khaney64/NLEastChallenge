@@ -1,4 +1,4 @@
-﻿namespace NetCoreReact;
+﻿namespace NLEastChallenge;
 
 public class DivisionDataVm
 {

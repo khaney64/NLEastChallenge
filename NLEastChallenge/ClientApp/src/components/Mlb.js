@@ -67,16 +67,16 @@ function GetRowData(row) {
 }
 
 function GetColor(value) {
-    if (value == 0)
+    if (value === 0)
         return { color: 'black' };
     else
         return { color: 'green', "font-weight": 'bold' };
 }
 
 function GetColumnValue(column) {
-    if (column.team == 'Record')
+    if (column.team === 'Record')
         return column.record;
-    else if (column.team == 'Streak')
+    else if (column.team === 'Streak')
         return column.streak;
     else
         return column.team;

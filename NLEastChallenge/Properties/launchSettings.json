@@ -8,7 +8,7 @@
     }
   },
   "profiles": {
-    "NetCoreReact": {
+    "NLEastChallenge": {
       "commandName": "Project",
       "launchBrowser": true,
       "applicationUrl": "https://localhost:7009;http://localhost:5009",

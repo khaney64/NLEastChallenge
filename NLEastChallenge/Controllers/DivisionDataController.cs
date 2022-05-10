@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace NetCoreReact.Controllers
+namespace NLEastChallenge.Controllers
 {
     [ApiController]
     [Route("[controller]")]
