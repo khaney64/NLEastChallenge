@@ -14,9 +14,6 @@ public class DivisionData
 
     internal static DivisionDataVm GetData(DivisionData[] configuredData)
     {
-        if (configuredData is null)
-            return new DivisionDataVm();
-
         var actual = FetchActual();
         if (actual is null)
             return new DivisionDataVm();
@@ -44,9 +41,19 @@ public class DivisionData
             }
         }
 
-        for (var i = 0; i < configuredData?.Length; i++)
+        // sort the configured data by total and team values
+        var sorted = configuredData?.ToList()
+            .OrderByDescending(c => c.Teams.Sum(t => t.Value))
+            .ThenByDescending(c => c.Teams[0].Value)
+            .ThenByDescending(c => c.Teams[1].Value)
+            .ThenByDescending(c => c.Teams[2].Value)
+            .ThenByDescending(c => c.Teams[3].Value)
+            .ThenByDescending(c => c.Teams[4].Value)
+            .ToList();
+
+        for (var i = 0; i < sorted?.Count; i++)
         {
-            divisionData[i + 1] = configuredData[i];
+            divisionData[i + 1] = sorted[i];
         };
 
         var result = new DivisionDataVm()
