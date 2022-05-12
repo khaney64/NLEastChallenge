@@ -157,7 +157,7 @@ public class DivisionData
         var actual = standings
             .SetQueryParam("leagueId", "104")
             .SetQueryParam("season", "2022")
-            .GetJsonAsync<Root>()
+            .GetJsonAsync<StandingsRoot>()
             .Result;
 
         logger.LogTrace($"fetch standings {standings} leagueId 104 season 2022");
@@ -176,7 +176,7 @@ public class DivisionData
         for (var t = 0; t < nlEast.Count; t++)
         {
             result.Teams[t] = new TeamData() { 
-                Team = NameToNickname(nlEast[t].Team.Name ?? ""),
+                Team = TeamData.NameToNickname(nlEast[t].Team.Name ?? ""),
                 Record = BuildRecord(nlEast[t].LeagueRecord),
                 Streak = nlEast[t].Streak.StreakCode
             };
@@ -188,29 +188,5 @@ public class DivisionData
     private static string BuildRecord(LeagueRecord leagueRecord)
     {
         return $"{leagueRecord.Wins}-{leagueRecord.Losses}";
-    }
-
-    private static string NameToNickname(string teamName)
-    {
-        switch (teamName)
-        {
-            case "New York Mets":
-                return "NYM";
-
-            case "Philadelphia Phillies":
-                return "PHI";
-
-            case "Atlanta Braves":
-                return "ATL";
-
-            case "Miami Marlins":
-                return "MIA";
-
-            case "Washington Nationals":
-                return "WAS";
-
-            default:
-                return "???";
-        }
     }
 }

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 
-export class Mlb extends Component {
-    static displayName = Mlb.name;
+export class Standings extends Component {
+    static displayName = Standings.name;
 
     constructor(props) {
         super(props);
@@ -40,12 +40,11 @@ export class Mlb extends Component {
 
     render() {
         let contents = this.state.loading
-            ? <p><em>Loading...</em></p>
-            : Mlb.renderDivisionTable(this.state.divisionData);
+            ? <p><em>Loading Standings...</em></p>
+            : Standings.renderDivisionTable(this.state.divisionData);
 
         return (
             <div>
-                <h1 id="tabelLabel" >NL East Challenge</h1>
                 {contents}
             </div>
         );
@@ -81,3 +80,5 @@ function GetColumnValue(column) {
     else
         return column.team;
 }
+
+export default Standings;
