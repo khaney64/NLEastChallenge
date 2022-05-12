@@ -26,7 +26,7 @@ namespace NLEastChallenge
 
             var todaysGames = gamesUrl
                 .SetQueryParam("sportId", "1")
-                //.SetQueryParam("date", GetGameDate())
+                .SetQueryParam("date", GetScheduleDate(logger))
                 .GetJsonAsync<GameRoot>()
                 .Result;
 
@@ -65,10 +65,26 @@ namespace NLEastChallenge
             }
         }
 
-        private static object GetGameDate()
+        private static string GetScheduleDate(ILogger logger)
         {
             // need to deal with Z time, and if after midnight (EST) return previous day
-            return DateTime.Now.ToString("d");
+
+            try
+            {
+                var utcNow = DateTime.UtcNow;
+                var easternZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
+                var estNow = TimeZoneInfo.ConvertTimeFromUtc(utcNow, easternZone);
+                var actual = estNow;
+                if (estNow.Hour is >= 0 and <= 3)
+                    actual = actual.AddDays(-1);
+
+                return actual.ToString("MM/dd/yyy");
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, "Unexpected error getting schedule date");
+                return "Scheduled";
+            }
         }
 
         private static bool HasNlEastTeam(Game game)
