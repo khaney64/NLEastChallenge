@@ -13,14 +13,14 @@ export class Standings extends Component {
     }
 
     static renderDivisionTable(divisionData) {
-        const Headers = divisionData.headers.map((header) =>
-            <th>{header}</th>
+        const Headers = divisionData.headers.map((header, index) =>
+            <th key={index}>{header}</th>
         );
-        const Rows = divisionData.rows.map((row) =>
-            <tr> {GetRowData(row)} </tr>
+        const Rows = divisionData.rows.map((row, index) =>
+            <tr key={index}>{GetRowData(row)}</tr>
         );
-        const Footers = divisionData.footers.map((footer) =>
-            <td>{footer}</td>
+        const Footers = divisionData.footers.map((footer, index) =>
+            <td key={index}>{footer}</td>
         );
 
         return (
@@ -58,8 +58,8 @@ export class Standings extends Component {
 }
 
 function GetRowData(row) {
-    const RowData = row.map((column) =>
-        <td style={GetColor(column.value)}>{GetColumnValue(column)}</td>
+    const RowData = row.map((column, index) =>
+        <td key={index} style={GetColor(column.value)}>{GetColumnValue(column)}</td>
     );
 
     return RowData;
@@ -69,7 +69,7 @@ function GetColor(value) {
     if (value === 0)
         return { color: 'black' };
     else
-        return { color: 'green', "font-weight": 'bold' };
+        return { color: 'green', "fontWeight": 'bold' };
 }
 
 function GetColumnValue(column) {

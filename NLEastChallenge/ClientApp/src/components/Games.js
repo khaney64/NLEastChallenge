@@ -12,13 +12,23 @@ export class Games extends Component {
         this.populateGameData();
     }
 
-    static renderGameTable(gameData) {
-        const Rows = gameData.map((game) =>
-            <tr>
-                <td>{game.homeTeam}</td>
-                <td>{game.awayTeam}</td>
-                <td>{GetStatus(game)}</td>
-                <td>{GetScore(game)}</td>
+    async populateGameData() {
+        //console.log('via populateGameData');
+        const response = await fetch('gamedata');
+        const data = await response.json();
+
+        this.setState({ gameData: data, loading: false });
+    }
+
+    static renderGameTable(comp) {
+
+        const gameData = comp.state.gameData;
+
+        const Rows = gameData.map((game, index) =>
+            <tr key={ index }>
+                <td key={'game' + index }>{getMatchup(game)}</td>
+                <td key={'status' + index}>{getStatus(game)}</td>
+                <td key={'score' + index}>{getScore(game)}</td>
             </tr>
         );
 
@@ -26,10 +36,11 @@ export class Games extends Component {
             <table className='table table-striped' aria-labelledby="tabelLabel">
                 <thead>
                     <tr>
-                        <th>Home</th>
-                        <th>Away</th>
-                        <th>Status</th>
-                        <th>Score</th>
+                        <th>Game</th>
+                        <th><div onClick={() => { comp.populateGameData(); }}>Status</div></th>
+                        <th>Score &nbsp;
+                            <img src={require('../images/refresh2.png').default} alt="refresh" style={{ height: '20px', width: '20px', borderWidth: '0' }} onClick={() => { comp.populateGameData(); }} />
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -42,7 +53,7 @@ export class Games extends Component {
     render() {
         let contents = this.state.loading
             ? <p><em>Loading Games...</em></p>
-            : Games.renderGameTable(this.state.gameData);
+            : Games.renderGameTable(this);
 
         return (
             <div>
@@ -51,42 +62,25 @@ export class Games extends Component {
             </div>
         );
     }
-
-    async populateGameData() {
-        const response = await fetch('gamedata');
-        const data = await response.json();
-        this.setState({ gameData: data, loading: false });
-    }
 }
 
-function GetStatus(game) {
+function getMatchup(game)
+{
+    return game.awayTeam + ' at ' + game.homeTeam;
+}
+
+function getStatus(game) {
     if (game.status === 'Scheduled')
         return game.gameTime;
 
     return game.status;
 }
 
-function GetScore(game) {
+function getScore(game) {
     if (game.status === 'Final' || game.status === 'In Progress' || game.status === 'Game Over')
-        return game.homeScore + '-' + game.awayScore;
+        return game.awayScore + '-' + game.homeScore;
 
     return '';
-}
-
-function GetColor(value) {
-    if (value === 0)
-        return { color: 'black' };
-    else
-        return { color: 'green', "font-weight": 'bold' };
-}
-
-function GetColumnValue(column) {
-    if (column.team === 'Record')
-        return column.record;
-    else if (column.team === 'Streak')
-        return column.streak;
-    else
-        return column.team;
 }
 
 export default Games;
