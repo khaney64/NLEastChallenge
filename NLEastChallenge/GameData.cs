@@ -20,14 +20,17 @@ namespace NLEastChallenge
 
         public static List<GameData>? FetchTodaysGames(ILogger logger)
         {
-            var games = "http://statsapi.mlb.com/api/v1/schedule/games";
-            var todaysGames = games
+            var gamesUrl = "http://statsapi.mlb.com/api/v1/schedule/games";
+
+            logger.LogTrace($"fetch standings {gamesUrl} sportId 1");
+
+            var todaysGames = gamesUrl
                 .SetQueryParam("sportId", "1")
                 //.SetQueryParam("date", GetGameDate())
                 .GetJsonAsync<GameRoot>()
                 .Result;
 
-            logger.LogTrace($"fetch standings {games} sportId 1");
+            logger.LogTrace($"fetched standings {gamesUrl} sportId 1");
 
             var latestDate = todaysGames.Dates.FirstOrDefault();
             if (latestDate is null || latestDate.TotalGames == 0)
@@ -39,7 +42,7 @@ namespace NLEastChallenge
                 {
                     HomeTeam = game.Teams.Home.Team.Name,
                     AwayTeam = game.Teams.Away.Team.Name,
-                    GameTime = GetGameDateEst(game.GameDate),
+                    GameTime = GetGameDateEst(game.GameDate, logger),
                     HomeScore = game.Teams.Home.Score,
                     AwayScore = game.Teams.Away.Score,
                     Status = game.Status.DetailedState
@@ -47,11 +50,19 @@ namespace NLEastChallenge
                 .ToList();
         }
 
-        private static string GetGameDateEst(DateTime gameDateUtc)
+        private static string GetGameDateEst(DateTime gameDateUtc, ILogger logger)
         {
-            var easternZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
-            var gameDateEst = TimeZoneInfo.ConvertTimeFromUtc(gameDateUtc, easternZone);
-            return gameDateEst.ToString("h:mm tt");
+            try
+            {
+                var easternZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
+                var gameDateEst = TimeZoneInfo.ConvertTimeFromUtc(gameDateUtc, easternZone);
+                return gameDateEst.ToString("h:mm tt");
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, "Unexpected error getting game date");
+                return "Scheduled";
+            }
         }
 
         private static object GetGameDate()

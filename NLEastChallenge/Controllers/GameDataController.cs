@@ -11,12 +11,16 @@ namespace NLEastChallenge.Controllers
         public GameDataController(ILogger<GameDataController> logger, IConfiguration configuration)
         {
             this.logger = logger;
+            logger.LogTrace($"{nameof(GameDataController)} ctor");
         }
 
         [HttpGet]
         public IEnumerable<GameData> Get()
         {
-            return GameData.FetchTodaysGames(logger) ?? new List<GameData>();
+            logger.LogTrace($"Start {nameof(GameDataController)}.({nameof(Get)})");
+            var data = GameData.FetchTodaysGames(logger) ?? new List<GameData>();
+            logger.LogTrace($"End {nameof(GameDataController)}.({nameof(Get)})");
+            return data;
         }
     }
 }
