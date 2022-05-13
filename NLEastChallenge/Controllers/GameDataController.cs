@@ -17,9 +17,9 @@ namespace NLEastChallenge.Controllers
         [HttpGet]
         public IEnumerable<GameData> Get()
         {
-            logger.LogTrace($"Start {nameof(GameDataController)}.({nameof(Get)})");
+            logger.LogTrace($"Start {nameof(GameDataController)}.{nameof(Get)}()");
             var data = GameData.FetchTodaysGames(logger) ?? new List<GameData>();
-            logger.LogTrace($"End {nameof(GameDataController)}.({nameof(Get)})");
+            logger.LogTrace($"End {nameof(GameDataController)}.{nameof(Get)}()");
             return data;
         }
     }

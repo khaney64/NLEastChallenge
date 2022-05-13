@@ -18,6 +18,8 @@ namespace NLEastChallenge
 
         public int AwayScore { get; set; }
 
+        public string Inning { get; set; } = String.Empty;
+
         public static List<GameData>? FetchTodaysGames(ILogger logger)
         {
             var gamesUrl = "http://statsapi.mlb.com/api/v1/schedule/games";
@@ -45,9 +47,23 @@ namespace NLEastChallenge
                     GameTime = GetGameDateEst(game.GameDate, logger),
                     HomeScore = game.Teams.Home.Score,
                     AwayScore = game.Teams.Away.Score,
-                    Status = game.Status.DetailedState
+                    Status = game.Status.DetailedState,
+                    Inning = GetInning(game, logger)
                 })
                 .ToList();
+        }
+
+        private static string GetInning(Game game, ILogger logger)
+        {
+            if (game.Status.DetailedState != "In Progress")
+                return "";
+
+            var liveData = LiveData.GetLiveData(logger, game.GamePk);
+
+            if (liveData is null)
+                return "";
+
+            return $"{liveData.Indicator} {liveData.Inning}";
         }
 
         private static string GetGameDateEst(DateTime gameDateUtc, ILogger logger)

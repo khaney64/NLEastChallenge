@@ -13,12 +13,16 @@ namespace NLEastChallenge.Controllers
         {
             this.logger = logger;
             configuredData = configuration.GetSection("Data").Get<DivisionData[]>();
+            logger.LogTrace($"{nameof(DivisionDataController)} ctor");
         }
 
         [HttpGet]
         public DivisionDataVm Get()
         {
-            return DivisionData.GetData(configuredData, logger);
+            logger.LogTrace($"Start {nameof(DivisionDataController)}.{nameof(Get)}()");
+            var data = DivisionData.GetData(configuredData, logger);
+            logger.LogTrace($"End {nameof(DivisionDataController)}.{nameof(Get)}()");
+            return data;
         }
     }
 }

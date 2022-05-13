@@ -37,7 +37,7 @@ export class Games extends Component {
                 <thead>
                     <tr>
                         <th>Game</th>
-                        <th><div onClick={() => { comp.populateGameData(); }}>Status</div></th>
+                        <th>Status</th>
                         <th>Score &nbsp;
                             <img src={require('../images/refresh2.png').default} alt="refresh" style={{ height: '20px', width: '20px', borderWidth: '0' }} onClick={() => { comp.populateGameData(); }} />
                         </th>
@@ -70,7 +70,7 @@ function getMatchup(game)
 }
 
 function getStatus(game) {
-    if (game.status === 'Scheduled')
+    if (game.status === 'Scheduled' || game.status === 'Pre-Game')
         return game.gameTime;
 
     return game.status;
@@ -78,7 +78,7 @@ function getStatus(game) {
 
 function getScore(game) {
     if (game.status === 'Final' || game.status === 'In Progress' || game.status === 'Game Over')
-        return game.awayScore + '-' + game.homeScore;
+        return game.awayScore + '-' + game.homeScore + '  ' + game.inning;
 
     return '';
 }
