@@ -45,7 +45,7 @@ namespace NLEastChallenge
 
         private static (string inning, int outs) GetInningAndOuts(About about, Count count)
         {
-            var inning = about.HalfInning == "Top" ? "top" : "bot";
+            var inning = about.IsTopInning ? "top" : "bot";
             var outs = count.Outs;
 
             if (count.Outs == 3)
