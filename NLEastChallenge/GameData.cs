@@ -28,36 +28,42 @@ namespace NLEastChallenge
 
             logger.LogTrace($"fetch standings {gamesUrl} sportId 1");
 
-            var todaysGames = gamesUrl
-                .SetQueryParam("sportId", "1")
-                .SetQueryParam("date", GetScheduleDate(logger))
-                .GetJsonAsync<GameRoot>()
-                .Result;
+            try
+            {
+                var todaysGames = gamesUrl
+                    .SetQueryParam("sportId", "1")
+                    .SetQueryParam("date", GetScheduleDate(logger))
+                    .GetJsonAsync<GameRoot>()
+                    .Result;
 
-            logger.LogTrace($"fetched standings {gamesUrl} sportId 1");
+                var latestDate = todaysGames.Dates.FirstOrDefault();
+                if (latestDate is null || latestDate.TotalGames == 0)
+                    return null;
 
-            var latestDate = todaysGames.Dates.FirstOrDefault();
-            if (latestDate is null || latestDate.TotalGames == 0)
-                return null;
+                var nlEastGames = latestDate.Games.Where(HasNlEastTeam);
 
-            var nlEastGames = latestDate.Games.Where(HasNlEastTeam);
-
-            return nlEastGames.Select(game =>
-                {
-                    var inningAndOuts = InningAndOuts(game, logger);
-                    return new GameData()
+                return nlEastGames.Select(game =>
                     {
-                        HomeTeam = game.Teams.Home.Team.Name,
-                        AwayTeam = game.Teams.Away.Team.Name,
-                        GameTime = GetGameDateEst(game.GameDate, logger),
-                        HomeScore = game.Teams.Home.Score,
-                        AwayScore = game.Teams.Away.Score,
-                        Status = game.Status.DetailedState,
-                        Inning = inningAndOuts.Inning,
-                        Outs = inningAndOuts.Outs
-                    };
-                })
-                .ToList();
+                        var inningAndOuts = InningAndOuts(game, logger);
+                        return new GameData()
+                        {
+                            HomeTeam = game.Teams.Home.Team.Name,
+                            AwayTeam = game.Teams.Away.Team.Name,
+                            GameTime = GetGameDateEst(game.GameDate, logger),
+                            HomeScore = game.Teams.Home.Score,
+                            AwayScore = game.Teams.Away.Score,
+                            Status = game.Status.DetailedState,
+                            Inning = inningAndOuts.Inning,
+                            Outs = inningAndOuts.Outs
+                        };
+                    })
+                    .ToList();
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, $"Unexpected error getting GameData");
+                throw;
+            }
         }
 
         private static (string Inning, int Outs) InningAndOuts(Game game, ILogger logger)

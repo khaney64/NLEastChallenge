@@ -19,23 +19,28 @@ namespace NLEastChallenge
             var liveUrl = $"https://statsapi.mlb.com/api/v1.1/game/{gamePk}/feed/live";
 
             logger.LogTrace($"fetch live game {liveUrl}");
-
-            var gameData = liveUrl
-                .GetJsonAsync<LiveRoot>()
-                .Result;
-
-            logger.LogTrace($"fetched live game {liveUrl}");
-
-            var currentPlay = gameData.LiveData.Plays.CurrentPlay;
-
-            var inningsAndOuts = GetInningAndOuts(currentPlay.About, currentPlay.Count);
-            return new LiveData()
+            try
             {
-                Inning = inningsAndOuts.inning,
-                Outs = inningsAndOuts.outs,
-                HomeScore = currentPlay.Result.HomeScore,
-                AwayScore = currentPlay.Result.AwayScore
-            };
+                var gameData = liveUrl
+                    .GetJsonAsync<LiveRoot>()
+                    .Result;
+
+                var currentPlay = gameData.LiveData.Plays.CurrentPlay;
+
+                var inningsAndOuts = GetInningAndOuts(currentPlay.About, currentPlay.Count);
+                return new LiveData()
+                {
+                    Inning = inningsAndOuts.inning,
+                    Outs = inningsAndOuts.outs,
+                    HomeScore = currentPlay.Result.HomeScore,
+                    AwayScore = currentPlay.Result.AwayScore
+                };
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, $"Unexpected error fetch game {gamePk}");
+                throw;
+            }
         }
 
         private static (string inning, int outs) GetInningAndOuts(About about, Count count)
