@@ -118,7 +118,7 @@ function getInningAndOuts(game) {
         );
 
     return (
-        <span>{inning}&nbsp;&nbsp{outs}</span>
+        <span>{inning}&nbsp;&nbsp;{outs}</span>
     );
 }
 
@@ -150,13 +150,6 @@ function getOuts(game) {
             return (
                 <div>
                     <div class="dotOn"></div><div class="dotOn"></div><div class="dotOff"></div>
-                </div>
-        );
-        }
-        if (game.outs === 3) {
-            return (
-                <div>
-                    <div class="dotOn"></div><div class="dotOn"></div><div class="dotOn"></div>
                 </div>
         );
         }
