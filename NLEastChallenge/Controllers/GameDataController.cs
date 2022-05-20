@@ -14,7 +14,6 @@ namespace NLEastChallenge.Controllers
         {
             this.logger = logger;
             this.cache = cache;
-            logger.LogTrace($"{nameof(GameDataController)} ctor");
         }
 
         [HttpGet]

@@ -16,7 +16,6 @@ namespace NLEastChallenge.Controllers
             this.logger = logger;
             this.cache = cache;
             configuredData = configuration.GetSection("Data").Get<DivisionData[]>();
-            logger.LogTrace($"{nameof(DivisionDataController)} ctor");
         }
 
         [HttpGet]
