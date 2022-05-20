@@ -12,3 +12,27 @@ code {
   background-color: #1b6ec2;
   border-color: #1861ac;
 }
+
+.dotOff {
+    height: 8px;
+    width: 8px;
+    background-color: lightgrey;
+    border-color: black;
+    border-radius: 50%;
+    border: 1px solid black;
+    display: inline-block;
+    margin: 1px;
+    float: left;
+}
+
+.dotOn {
+    height: 8px;
+    width: 8px;
+    background-color: lightgreen;
+    border-color: black;
+    border-radius: 50%;
+    border: 1px solid black;
+    display: inline-block;
+    margin: 1px;
+    float: left;
+}

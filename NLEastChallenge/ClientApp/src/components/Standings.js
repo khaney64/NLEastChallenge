@@ -10,6 +10,11 @@ export class Standings extends Component {
 
     componentDidMount() {
         this.populateDivisionData();
+        this.interval = setInterval(() => this.populateDivisionData(), 360000);
+    }
+
+    componentWillUnmount() {
+        clearInterval(this.interval);
     }
 
     static renderDivisionTable(divisionData) {

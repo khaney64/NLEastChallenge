@@ -6,9 +6,9 @@ namespace NLEastChallenge
 {
     public class LiveData
     {
-        public int Inning { get; set; }
+        public string Inning { get; set; } = String.Empty;
 
-        public string Indicator { get; set; } = String.Empty;
+        public int Outs { get; set; }
 
         public int HomeScore { get; set; }
 
@@ -28,13 +28,28 @@ namespace NLEastChallenge
 
             var currentPlay = gameData.LiveData.Plays.CurrentPlay;
 
+            var inningsAndOuts = GetInningAndOuts(currentPlay.About, currentPlay.Count);
             return new LiveData()
             {
-                Inning = currentPlay.About.Inning,
-                Indicator = currentPlay.About.HalfInning,
+                Inning = inningsAndOuts.inning,
+                Outs = inningsAndOuts.outs,
                 HomeScore = currentPlay.Result.HomeScore,
                 AwayScore = currentPlay.Result.AwayScore
             };
+        }
+
+        private static (string inning, int outs) GetInningAndOuts(About about, Count count)
+        {
+            var inning = about.HalfInning == "Top" ? "top" : "bot";
+            var outs = count.Outs;
+
+            if (count.Outs == 3)
+            {
+                inning = inning == "top" ? "mid" : "end";
+                outs = 0;
+            }
+
+            return ($"{inning} {about.Inning}", outs);
         }
 
         private static string GetGameDateEst(DateTime gameDateUtc, ILogger logger)

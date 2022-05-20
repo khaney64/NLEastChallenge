@@ -6,19 +6,21 @@ namespace NLEastChallenge
 {
     public class GameData
     {
-        public string HomeTeam { get; set; }
+        public string HomeTeam { get; set; } = String.Empty;
 
-        public string AwayTeam { get; set; }
+        public string AwayTeam { get; set; } = String.Empty;
 
-        public string GameTime { get; set; }
+        public string GameTime { get; set; } = String.Empty;
 
-        public string Status { get; set; }
+        public string Status { get; set; } = String.Empty;
 
         public int HomeScore { get; set; }
 
         public int AwayScore { get; set; }
 
         public string Inning { get; set; } = String.Empty;
+
+        public int Outs { get; set; }
 
         public static List<GameData>? FetchTodaysGames(ILogger logger)
         {
@@ -40,30 +42,35 @@ namespace NLEastChallenge
 
             var nlEastGames = latestDate.Games.Where(HasNlEastTeam);
 
-            return nlEastGames.Select(game => new GameData()
+            return nlEastGames.Select(game =>
                 {
-                    HomeTeam = game.Teams.Home.Team.Name,
-                    AwayTeam = game.Teams.Away.Team.Name,
-                    GameTime = GetGameDateEst(game.GameDate, logger),
-                    HomeScore = game.Teams.Home.Score,
-                    AwayScore = game.Teams.Away.Score,
-                    Status = game.Status.DetailedState,
-                    Inning = GetInning(game, logger)
+                    var inningAndOuts = InningAndOuts(game, logger);
+                    return new GameData()
+                    {
+                        HomeTeam = game.Teams.Home.Team.Name,
+                        AwayTeam = game.Teams.Away.Team.Name,
+                        GameTime = GetGameDateEst(game.GameDate, logger),
+                        HomeScore = game.Teams.Home.Score,
+                        AwayScore = game.Teams.Away.Score,
+                        Status = game.Status.DetailedState,
+                        Inning = inningAndOuts.Inning,
+                        Outs = inningAndOuts.Outs
+                    };
                 })
                 .ToList();
         }
 
-        private static string GetInning(Game game, ILogger logger)
+        private static (string Inning, int Outs) InningAndOuts(Game game, ILogger logger)
         {
             if (game.Status.DetailedState != "In Progress")
-                return "";
+                return ("",0);
 
             var liveData = LiveData.GetLiveData(logger, game.GamePk);
 
             if (liveData is null)
-                return "";
-
-            return $"{liveData.Indicator} {liveData.Inning}";
+                return ("",0);
+            
+            return (liveData.Inning, liveData.Outs);
         }
 
         private static string GetGameDateEst(DateTime gameDateUtc, ILogger logger)
