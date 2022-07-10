@@ -188,7 +188,7 @@ public class DivisionData
     private static string GetWildcardGamesBack(TeamRecord teamRecord)
     {
         if (teamRecord.DivisionLeader)
-            return "*";
+            return "";
 
         if (teamRecord.WildCardEliminationNumber == "E")
             return "x";
@@ -199,6 +199,8 @@ public class DivisionData
     private static string BuildRecord(TeamRecord teamRecord)
     {
         var leagueRecord = teamRecord.LeagueRecord;
-        return $"{leagueRecord.Wins}-{leagueRecord.Losses} ({GetWildcardGamesBack(teamRecord)})";
+        var wcgb = GetWildcardGamesBack(teamRecord);
+        var wcgbValue = String.IsNullOrEmpty(wcgb) ? "" : $" ({wcgb})";
+        return $"{leagueRecord.Wins}-{leagueRecord.Losses}{wcgbValue}";
     }
 }
