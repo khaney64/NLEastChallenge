@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace NLEastChallenge.Controllers
@@ -19,7 +20,7 @@ namespace NLEastChallenge.Controllers
         [HttpGet]
         public IEnumerable<GameData> Get()
         {
-            logger.LogTrace($"{nameof(GameDataController)}.{nameof(Get)}()");
+            logger.LogTrace($"{GetIpAddress()}|{nameof(GameDataController)}.{nameof(Get)}()");
             try
             {
                 if (!cache.TryGetValue("game", out List<GameData> data))
@@ -39,6 +40,12 @@ namespace NLEastChallenge.Controllers
                 logger.LogError(e, $"Unexpected {nameof(Get)}() error");
                 throw;
             }
+        }
+        private string GetIpAddress()
+        {
+            var remoteIpAddress = Request.HttpContext.Features.Get<IHttpConnectionFeature>()?.RemoteIpAddress;
+
+            return remoteIpAddress?.ToString() ?? "";
         }
     }
 }

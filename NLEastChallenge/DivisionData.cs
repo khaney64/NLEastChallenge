@@ -177,7 +177,7 @@ public class DivisionData
         {
             result.Teams[t] = new TeamData() { 
                 Team = TeamData.NameToNickname(nlEast[t].Team.Name ?? ""),
-                Record = BuildRecord(nlEast[t].LeagueRecord),
+                Record = BuildRecord(nlEast[t]),
                 Streak = nlEast[t].Streak.StreakCode
             };
         }
@@ -185,8 +185,20 @@ public class DivisionData
         return result;
     }
 
-    private static string BuildRecord(LeagueRecord leagueRecord)
+    private static string GetWildcardGamesBack(TeamRecord teamRecord)
     {
-        return $"{leagueRecord.Wins}-{leagueRecord.Losses}";
+        if (teamRecord.DivisionLeader)
+            return "*";
+
+        if (teamRecord.WildCardEliminationNumber == "E")
+            return "x";
+
+        return teamRecord.WildCardGamesBack;
+    }
+
+    private static string BuildRecord(TeamRecord teamRecord)
+    {
+        var leagueRecord = teamRecord.LeagueRecord;
+        return $"{leagueRecord.Wins}-{leagueRecord.Losses} ({GetWildcardGamesBack(teamRecord)})";
     }
 }
