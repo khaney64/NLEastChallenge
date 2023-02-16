@@ -48,7 +48,7 @@ export class UpcomingGames extends Component {
                 <thead>
                     <tr>
                         <th>Game</th>
-                        <th>Status</th>
+                        <th>Date/Time</th>
                     </tr>
                 </thead>
                 <tbody>
