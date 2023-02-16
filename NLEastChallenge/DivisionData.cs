@@ -156,11 +156,11 @@ public class DivisionData
         var standings = "https://statsapi.mlb.com/api/v1/standings";
         var actual = standings
             .SetQueryParam("leagueId", "104")
-            .SetQueryParam("season", "2022")
+            .SetQueryParam("season", "2023")
             .GetJsonAsync<StandingsRoot>()
             .Result;
 
-        logger.LogTrace($"fetch standings {standings} leagueId 104 season 2022");
+        logger.LogTrace($"fetch standings {standings} leagueId 104 season 2023");
 
         var nlEast = actual.Records.FirstOrDefault(r => r.Division.Id == 204)?.TeamRecords;
 
@@ -178,7 +178,7 @@ public class DivisionData
             result.Teams[t] = new TeamData() { 
                 Team = TeamData.NameToNickname(nlEast[t].Team.Name ?? ""),
                 Record = BuildRecord(nlEast[t]),
-                Streak = nlEast[t].Streak.StreakCode
+                Streak = nlEast[t]?.Streak?.StreakCode ?? ""
             };
         }
 

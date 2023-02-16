@@ -18,7 +18,7 @@ export class Games extends Component {
 
     async populateGameData() {
         //console.log('via populateGameData');
-        const response = await fetch('gamedata');
+        const response = await fetch('gamedata/today');
         const data = await response.json();
 
         const newInterval = getRefreshInterval(data);
@@ -71,6 +71,8 @@ export class Games extends Component {
             <div>
                 <h2 id="tabelLabel" >Games Today</h2>
                 {contents}
+                <br />
+                <br />
             </div>
         );
     }

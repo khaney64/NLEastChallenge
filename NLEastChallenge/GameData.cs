@@ -26,7 +26,7 @@ namespace NLEastChallenge
         {
             var gamesUrl = "http://statsapi.mlb.com/api/v1/schedule/games";
 
-            logger.LogTrace($"fetch standings {gamesUrl} sportId 1");
+            logger.LogTrace($"fetch todays games {gamesUrl} sportId 1");
 
             try
             {
@@ -66,6 +66,88 @@ namespace NLEastChallenge
             }
         }
 
+        public static List<GameData>? FetchGamesDateRanges(ILogger logger, DateTime startDate, DateTime endDate)
+        {
+            var gamesUrl = "http://statsapi.mlb.com/api/v1/schedule/games";
+
+            logger.LogTrace($"fetch upcoming games {startDate:MM/dd/yyyy} to {endDate:MM/dd/yyyy} {gamesUrl} sportId 1");
+
+            try
+            {
+                var upcomingGames = gamesUrl
+                    .SetQueryParam("sportId", "1")
+                    .SetQueryParam("startDate", $"{startDate:MM/dd/yyyy}")
+                    .SetQueryParam("endDate", $"{endDate:MM/dd/yyyy}")
+                    .GetJsonAsync<GameRoot>()
+                    .Result;
+
+                var nlEastGames = GetLatestGameForEachNLEastTeam(logger, upcomingGames);
+
+                return nlEastGames.Select(game =>
+                    {
+                        return new GameData()
+                        {
+                            HomeTeam = game.Teams.Home.Team.Name,
+                            AwayTeam = game.Teams.Away.Team.Name,
+                            GameTime = GetGameDateEst(game.GameDate, logger),
+                            HomeScore = game.Teams.Home.Score,
+                            AwayScore = game.Teams.Away.Score,
+                            Status = game.Status.DetailedState,
+                            Inning = "",
+                            Outs = 0
+                        };
+                    })
+                    .ToList();
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, $"Unexpected error getting GameData");
+                throw;
+            }
+        }
+
+        private static IEnumerable<Game> GetLatestGameForEachNLEastTeam(ILogger logger, GameRoot upcoming)
+        {
+            var teamGames = new Dictionary<string, Game?>()
+            {
+                { "Atlanta Braves", null },
+                { "Miami Marlins", null },
+                { "New York Mets", null },
+                { "Philadelphia Phillies", null },
+                { "Washington Nationals", null },
+            };
+
+            foreach (var date in upcoming.Dates)
+            {
+                var eastGamesOnDate = date.Games.Where(HasNlEastTeam);
+                foreach (var eastGame in eastGamesOnDate)
+                {
+                    var gameDate = eastGame.GameDate;
+                    foreach (var team in teamGames.Keys)
+                    {
+                        var teamNext = teamGames[team];
+                        var home = eastGame.Teams.Home.Team;
+                        var away = eastGame.Teams.Away.Team;
+                        if (team == home.Name || team == away.Name)
+                        {
+                            if (teamNext is null || (gameDate.Date <=teamNext.GameDate.Date && gameDate.TimeOfDay < teamNext.GameDate.TimeOfDay))
+                            {
+                                var nextDateTime = gameDate.Date + gameDate.TimeOfDay;
+                                var gameInfo = $" {nextDateTime:MM/dd/yyyy hh:mm} {away.Name} at {home.Name}";
+                                if (teamNext is null)
+                                    logger.LogTrace($"Adding for {team} - {gameInfo}");
+                                else
+                                    logger.LogTrace($"Updating for {team} - {gameInfo}");
+                                teamGames[team] = eastGame;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return teamGames.Values.Where(g => g is not null);
+        }
+
         private static (string Inning, int Outs) InningAndOuts(Game game, ILogger logger)
         {
             if (game.Status.DetailedState != "In Progress")
@@ -85,7 +167,11 @@ namespace NLEastChallenge
             {
                 var easternZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
                 var gameDateEst = TimeZoneInfo.ConvertTimeFromUtc(gameDateUtc, easternZone);
-                return gameDateEst.ToString("h:mm tt");
+                var estNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, easternZone);
+                if (gameDateEst.Date > estNow.Date)
+                    return gameDateEst.ToString("M/d/yyyy h:mm tt");
+                else
+                    return gameDateEst.ToString("h:mm tt");
             }
             catch (Exception e)
             {
