@@ -145,7 +145,23 @@ namespace NLEastChallenge
                 }
             }
 
-            return teamGames.Values.Where(g => g is not null);
+            var gamePks = new List<int>();
+            var results = new List<Game>();
+            foreach (var teamGame in teamGames.Values)
+            {
+	            if (teamGame is null)
+		            continue;
+
+	            var gamePk = teamGame.GamePk;
+	            // do we already have this game? (east vs east)
+	            if (gamePks.Contains(gamePk))
+		            continue;
+
+	            results.Add(teamGame);
+	            gamePks.Add(gamePk);
+			}
+
+			return results;
         }
 
         private static (string Inning, int Outs) InningAndOuts(Game game, ILogger logger)
@@ -169,7 +185,7 @@ namespace NLEastChallenge
                 var gameDateEst = TimeZoneInfo.ConvertTimeFromUtc(gameDateUtc, easternZone);
                 var estNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, easternZone);
                 if (gameDateEst.Date > estNow.Date)
-                    return gameDateEst.ToString("M/d/yyyy h:mm tt");
+                    return gameDateEst.ToString("M/d h:mm tt");
                 else
                     return gameDateEst.ToString("h:mm tt");
             }

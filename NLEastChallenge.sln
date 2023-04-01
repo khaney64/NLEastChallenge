@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "React", "NLEastChallenge\NLEastChallenge.csproj", "{63C9C5F0-2C60-4161-B839-7EA0AE7A500B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NLEastChallenge", "NLEastChallenge\NLEastChallenge.csproj", "{63C9C5F0-2C60-4161-B839-7EA0AE7A500B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NLEastTests", "NLEastTests\NLEastTests.csproj", "{E8B09041-0E58-4BCF-A34F-ABC15AFEAC2F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{63C9C5F0-2C60-4161-B839-7EA0AE7A500B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{63C9C5F0-2C60-4161-B839-7EA0AE7A500B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{63C9C5F0-2C60-4161-B839-7EA0AE7A500B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E8B09041-0E58-4BCF-A34F-ABC15AFEAC2F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E8B09041-0E58-4BCF-A34F-ABC15AFEAC2F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E8B09041-0E58-4BCF-A34F-ABC15AFEAC2F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E8B09041-0E58-4BCF-A34F-ABC15AFEAC2F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

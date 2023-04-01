@@ -64,7 +64,7 @@ export class Standings extends Component {
 
 function GetRowData(row) {
     const RowData = row.map((column, index) =>
-        <td key={index} style={GetColor(column.value)}>{GetColumnValue(column)}</td>
+        <td key={index} style={GetColor(column.value)} title={GetTitle(column)}>{GetColumnValue(column)}</td>
     );
 
     return RowData;
@@ -77,13 +77,19 @@ function GetColor(value) {
         return { color: 'green', "fontWeight": 'bold' };
 }
 
+function GetTitle(column) {
+    if (column.winsGuess > 0)
+        return column.winsGuess;
+    return '';
+}
+
 function GetColumnValue(column) {
     if (column.team === 'Record')
         return column.record;
     else if (column.team === 'Streak')
         return column.streak;
     else
-        return column.team;
+        return column.teamName;
 }
 
 export default Standings;

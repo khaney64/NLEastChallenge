@@ -34,16 +34,26 @@ public class DivisionData
                 if (cTeams is null)
                     continue;
 
-                if (aTeams[i].Team == cTeams[i].Team)
+                if (aTeams[i].Team == cTeams[i].Team  && aTeams[i].Record != "0-0")
                 {
                     cTeams[i].Value = 5 - i;
                 }
             }
         }
 
+        var groups = configuredData.ToList()
+	        .GroupBy(c => c.Teams.Sum(t => t.Value));
+
+        var tiebreakTeam = actual.Teams.First(t => t.Team == "ATL");
+        var games = tiebreakTeam.Wins + tiebreakTeam.Losses;
+        double tiebreakPercent = games == 0 ? 0.0 : ((double)tiebreakTeam.Wins / games);
+
+		ResolveAllTies(groups, tiebreakPercent);
+
         // sort the configured data by total and team values
         var sorted = configuredData?.ToList()
             .OrderByDescending(c => c.Teams.Sum(t => t.Value))
+            .ThenBy(c => c.Teams[0].TieBreak)
             .ThenByDescending(c => c.Teams[0].Value)
             .ThenByDescending(c => c.Teams[1].Value)
             .ThenByDescending(c => c.Teams[2].Value)
@@ -64,6 +74,29 @@ public class DivisionData
         };
 
         return result;
+    }
+
+    private static void ResolveAllTies(IEnumerable<IGrouping<int, DivisionData>> groups, double percent)
+    {
+	    foreach (var group in groups)
+	    {
+		    ResolveGroupTies(group, percent);
+	    }
+    }
+
+    private static void ResolveGroupTies(IGrouping<int, DivisionData> group, double percent)
+    {
+	    var datas = group.Where(d => d.Teams is not null).ToList();
+	    if (datas.Count < 2)
+	    {
+		    return;
+	    }
+	    for (var i = 0; i < datas.Count(); i++)
+	    {
+		    var data = datas[i];
+		    double pct = (double)data.Teams?[0].WinsGuess / 162;
+            data.Teams[0].TieBreak = Math.Abs(percent - pct);
+	    }
     }
 
     private static string[] BuildHeaders(DivisionData[] divisionData)
@@ -175,10 +208,13 @@ public class DivisionData
 
         for (var t = 0; t < nlEast.Count; t++)
         {
+	        var wAndL = WinsAndLosses(nlEast[t]);
             result.Teams[t] = new TeamData() { 
                 Team = TeamData.NameToNickname(nlEast[t].Team.Name ?? ""),
                 Record = BuildRecord(nlEast[t]),
-                Streak = nlEast[t]?.Streak?.StreakCode ?? ""
+                Streak = nlEast[t]?.Streak?.StreakCode ?? "",
+                Wins = wAndL.wins,
+                Losses = wAndL.losses
             };
         }
 
@@ -202,5 +238,10 @@ public class DivisionData
         var wcgb = GetWildcardGamesBack(teamRecord);
         var wcgbValue = String.IsNullOrEmpty(wcgb) ? "" : $" ({wcgb})";
         return $"{leagueRecord.Wins}-{leagueRecord.Losses}{wcgbValue}";
+    }
+
+    private static (int wins, int losses) WinsAndLosses(TeamRecord teamRecord)
+    {
+	    return (teamRecord.LeagueRecord.Wins, teamRecord.LeagueRecord.Losses);
     }
 }
