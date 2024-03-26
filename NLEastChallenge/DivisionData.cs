@@ -189,7 +189,7 @@ public class DivisionData
         var standings = "https://statsapi.mlb.com/api/v1/standings";
         var actual = standings
             .SetQueryParam("leagueId", "104")
-            .SetQueryParam("season", "2023")
+            .SetQueryParam("season", "2024")
             .GetJsonAsync<StandingsRoot>()
             .Result;
 

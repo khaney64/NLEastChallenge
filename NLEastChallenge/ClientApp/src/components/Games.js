@@ -51,7 +51,7 @@ export class Games extends Component {
                         <th>Game</th>
                         <th>Status</th>
                         <th>Score &nbsp;
-                            <img src={require('../images/refresh2.png').default} alt="refresh" style={{ height: '20px', width: '20px', borderWidth: '0' }} onClick={() => { comp.populateGameData(); }} />
+                            <img src={require('../images/refresh2.png')} alt="refresh" style={{ height: '20px', width: '20px', borderWidth: '0' }} onClick={() => { comp.populateGameData(); }} />
                         </th>
                     </tr>
                 </thead>
