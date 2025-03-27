@@ -189,11 +189,11 @@ public class DivisionData
         var standings = "https://statsapi.mlb.com/api/v1/standings";
         var actual = standings
             .SetQueryParam("leagueId", "104")
-            .SetQueryParam("season", "2024")
+            .SetQueryParam("season", "2025")
             .GetJsonAsync<StandingsRoot>()
             .Result;
 
-        logger.LogTrace($"fetch standings {standings} leagueId 104 season 2023");
+        logger.LogTrace($"fetch standings {standings} leagueId 104 season 2025");
 
         var nlEast = actual.Records.FirstOrDefault(r => r.Division.Id == 204)?.TeamRecords;
 
