@@ -350,3 +350,6 @@ MigrationBackup/
 .ionide/
 NLEastChallenge/Properties/ServiceDependencies/NLEastChallenge - Zip Deploy/profile.arm.json
 .grepai/
+.mcp.json
+.claude/settings.local.json
+package-lock.json

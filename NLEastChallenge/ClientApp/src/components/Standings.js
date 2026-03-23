@@ -29,7 +29,7 @@ export class Standings extends Component {
         );
 
         return (
-            <table className='table table-striped' aria-labelledby="tabelLabel">
+            <table className='table table-striped' style={{ tableLayout: 'fixed' }} aria-labelledby="tabelLabel">
                 <thead>
                     <tr>{Headers}</tr>
                 </thead>
