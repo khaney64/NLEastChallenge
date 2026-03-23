@@ -32,19 +32,24 @@ public class TeamData
     {
         switch (teamName)
         {
-            case "New York Mets":
+	        case "Mets":
+			case "New York Mets":
                 return "NYM";
 
-            case "Philadelphia Phillies":
+			case "Phillies":
+			case "Philadelphia Phillies":
                 return "PHI";
 
-            case "Atlanta Braves":
+	        case "Braves":
+			case "Atlanta Braves":
                 return "ATL";
 
-            case "Miami Marlins":
+	        case "Marlins":
+			case "Miami Marlins":
                 return "MIA";
 
-            case "Washington Nationals":
+	        case "Nationals":
+			case "Washington Nationals":
                 return "WAS";
 
             default:
