@@ -1,4 +1,5 @@
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
+import { Tooltip } from 'reactstrap';
 
 export class Standings extends Component {
     static displayName = Standings.name;
@@ -19,27 +20,29 @@ export class Standings extends Component {
 
     static renderDivisionTable(divisionData) {
         const Headers = divisionData.headers.map((header, index) =>
-            <th key={index}>{header}</th>
+            <th key={index} className={header === 'Streak' ? 'streak-col' : ''}>{header}</th>
         );
-        const Rows = divisionData.rows.map((row, index) =>
-            <tr key={index}>{GetRowData(row)}</tr>
+        const Rows = divisionData.rows.map((row, rowIndex) =>
+            <tr key={rowIndex}>{GetRowData(row, rowIndex)}</tr>
         );
         const Footers = divisionData.footers.map((footer, index) =>
-            <td key={index}>{footer}</td>
+            <td key={index} className={divisionData.headers[index] === 'Streak' ? 'streak-col' : ''}>{footer}</td>
         );
 
         return (
-            <table className='table table-striped' style={{ tableLayout: 'fixed' }} aria-labelledby="tabelLabel">
-                <thead>
-                    <tr>{Headers}</tr>
-                </thead>
-                <tbody>
-                    {Rows}
-                </tbody>
-                <tfoot>
-                    <tr>{Footers}</tr>
-                </tfoot>
-            </table>
+            <div className="table-responsive">
+                <table className='table table-striped standings-table' style={{ tableLayout: 'fixed' }} aria-labelledby="tabelLabel">
+                    <thead>
+                        <tr>{Headers}</tr>
+                    </thead>
+                    <tbody>
+                        {Rows}
+                    </tbody>
+                    <tfoot>
+                        <tr>{Footers}</tr>
+                    </tfoot>
+                </table>
+            </div>
         );
     }
 
@@ -62,9 +65,38 @@ export class Standings extends Component {
     }
 }
 
-function GetRowData(row) {
-    const RowData = row.map((column, index) =>
-        <td key={index} style={GetColor(column.value)} title={GetTitle(column)}>{GetColumnValue(column)}</td>
+function TooltipCell({ column, rowIndex, colIndex }) {
+    const [tooltipOpen, setTooltipOpen] = useState(false);
+    const toggle = () => setTooltipOpen(!tooltipOpen);
+    const cellId = `cell-${rowIndex}-${colIndex}`;
+    const hasTooltip = column.winsGuess > 0;
+    const isStreak = column.team === 'Streak';
+
+    return (
+        <td
+            id={cellId}
+            style={GetColor(column.value)}
+            className={isStreak ? 'streak-col' : ''}
+        >
+            {GetColumnValue(column)}
+            {hasTooltip &&
+                <Tooltip
+                    placement="top"
+                    isOpen={tooltipOpen}
+                    target={cellId}
+                    toggle={toggle}
+                    trigger="hover focus click"
+                >
+                    {column.winsGuess} wins
+                </Tooltip>
+            }
+        </td>
+    );
+}
+
+function GetRowData(row, rowIndex) {
+    const RowData = row.map((column, colIndex) =>
+        <TooltipCell key={colIndex} column={column} rowIndex={rowIndex} colIndex={colIndex} />
     );
 
     return RowData;
@@ -75,12 +107,6 @@ function GetColor(value) {
         return { color: 'black' };
     else
         return { color: 'green', "fontWeight": 'bold' };
-}
-
-function GetTitle(column) {
-    if (column.winsGuess > 0)
-        return column.winsGuess;
-    return '';
 }
 
 function GetColumnValue(column) {

@@ -36,3 +36,14 @@ code {
     margin: 1px;
     float: left;
 }
+
+/* Mobile responsive standings table */
+@media (max-width: 576px) {
+    .streak-col {
+        display: none;
+    }
+
+    .standings-table {
+        font-size: 0.85rem;
+    }
+}
