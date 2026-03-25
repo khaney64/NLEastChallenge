@@ -20,14 +20,16 @@ export class Standings extends Component {
 
     static renderDivisionTable(divisionData) {
         const Headers = divisionData.headers.map((header, index) =>
-            <th key={index} className={header === 'Streak' ? 'streak-col' : ''}>{header}</th>
+            <th key={index} className={header === 'Streak' ? 'streak-col' : header === 'Record' ? 'record-col' : ''}>{header}</th>
         );
         const Rows = divisionData.rows.map((row, rowIndex) =>
             <tr key={rowIndex}>{GetRowData(row, rowIndex)}</tr>
         );
-        const Footers = divisionData.footers.map((footer, index) =>
-            <td key={index} className={divisionData.headers[index] === 'Streak' ? 'streak-col' : ''}>{footer}</td>
-        );
+        const Footers = divisionData.footers.map((footer, index) => {
+            const header = divisionData.headers[index];
+            const cls = header === 'Streak' ? 'streak-col' : header === 'Record' ? 'record-col' : '';
+            return <td key={index} className={cls}>{footer}</td>;
+        });
 
         return (
             <div className="table-responsive">
@@ -71,14 +73,19 @@ function TooltipCell({ column, rowIndex, colIndex }) {
     const cellId = `cell-${rowIndex}-${colIndex}`;
     const hasTooltip = column.winsGuess > 0;
     const isStreak = column.team === 'Streak';
+    const isRecord = column.team === 'Record';
+    const isActualTeam = colIndex === 0 && column.record;
+
+    const cls = isStreak ? 'streak-col' : isRecord ? 'record-col' : '';
 
     return (
         <td
             id={cellId}
             style={GetColor(column.value)}
-            className={isStreak ? 'streak-col' : ''}
+            className={cls}
         >
             {GetColumnValue(column)}
+            {isActualTeam && <span className="mobile-record">{column.record}</span>}
             {hasTooltip &&
                 <Tooltip
                     placement="top"

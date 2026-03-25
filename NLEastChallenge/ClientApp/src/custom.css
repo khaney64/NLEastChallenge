@@ -37,10 +37,22 @@ code {
     float: left;
 }
 
-/* Mobile responsive standings table */
-@media (max-width: 576px) {
-    .streak-col {
+/* Hidden by default on desktop and landscape */
+.mobile-record {
+    display: none;
+}
+
+/* Mobile portrait: hide stat columns, show record under team name */
+@media (max-width: 576px) and (orientation: portrait) {
+    .streak-col,
+    .record-col {
         display: none;
+    }
+
+    .mobile-record {
+        display: block;
+        font-size: 0.75rem;
+        color: #666;
     }
 
     .standings-table {
