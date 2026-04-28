@@ -42,6 +42,102 @@ code {
     display: none;
 }
 
+.standings-table td.score-normal,
+.standings-table td.score-rank-distance {
+    --bs-table-color: green;
+    --bs-table-striped-color: green;
+    color: green;
+    font-weight: bold;
+}
+
+.standings-table td.score-pairwise {
+    --bs-table-color: #0d6efd;
+    --bs-table-striped-color: #0d6efd;
+    color: #0d6efd;
+    font-weight: bold;
+}
+
+.standings-table td.score-mixed {
+    --bs-table-color: #008080;
+    --bs-table-striped-color: #008080;
+    color: #008080;
+    font-weight: bold;
+}
+
+.mode-toggle-footer {
+    text-align: left;
+    vertical-align: middle;
+}
+
+.scoring-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.scoring-mode-toggle {
+    display: inline-flex;
+    gap: 2px;
+    border: 1px solid #adb5bd;
+    border-radius: 6px;
+    padding: 2px;
+    background: #f8f9fa;
+    white-space: nowrap;
+}
+
+.scoring-mode-toggle button {
+    border: 0;
+    border-radius: 4px;
+    width: 32px;
+    height: 28px;
+    padding: 0;
+    background: transparent;
+    color: #212529;
+    font-size: 0.85rem;
+    line-height: 1.2;
+}
+
+.scoring-mode-toggle button.active {
+    background: #1b6ec2;
+    color: #fff;
+}
+
+.scoring-mode-toggle button:focus {
+    outline: 2px solid #86b7fe;
+    outline-offset: 1px;
+}
+
+.scoring-help-button {
+    width: 22px;
+    height: 22px;
+    border: 1px solid #6c757d;
+    border-radius: 50%;
+    padding: 0;
+    background: #fff;
+    color: #495057;
+    font-size: 0.78rem;
+    line-height: 1;
+    font-weight: 700;
+}
+
+.scoring-help-button:focus {
+    outline: 2px solid #86b7fe;
+    outline-offset: 2px;
+}
+
+.scoring-help-panel {
+    width: 100%;
+    margin: 8px 0 0;
+    padding: 8px 10px;
+    border-left: 3px solid #1b6ec2;
+    background: #f8f9fa;
+    color: #212529;
+    font-size: 0.9rem;
+    line-height: 1.25;
+    font-weight: normal;
+}
+
 /* Mobile portrait: hide stat columns, show record under team name */
 @media (max-width: 576px) and (orientation: portrait) {
     .streak-col,
@@ -57,5 +153,26 @@ code {
 
     .standings-table {
         font-size: 0.85rem;
+    }
+
+    .mode-toggle-footer {
+        display: table-cell;
+    }
+
+    .scoring-mode-toggle button {
+        width: 27px;
+        height: 24px;
+        padding: 0;
+        font-size: 0.75rem;
+    }
+
+    .scoring-help-button {
+        width: 20px;
+        height: 20px;
+        font-size: 0.7rem;
+    }
+
+    .scoring-help-panel {
+        font-size: 0.7rem;
     }
 }

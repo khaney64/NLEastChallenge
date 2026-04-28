@@ -4,6 +4,12 @@ using Flurl.Http;
 
 namespace NLEastChallenge;
 
+public enum ScoringMode
+{
+    Normal,
+    Horseshoes
+}
+
 public class DivisionData
 {
     const int StatColumns = 2;
@@ -12,56 +18,47 @@ public class DivisionData
 
     public TeamData[]? Teams { get; set; }
 
-    internal static DivisionDataVm GetData(DivisionData[] configuredData, ILogger logger)
+    internal static DivisionDataVm GetData(DivisionData[] configuredData, ILogger logger, ScoringMode scoringMode = ScoringMode.Normal)
     {
         var actual = FetchActual(logger);
         if (actual is null)
             return new DivisionDataVm();
 
-        var divisionData = new DivisionData[configuredData.Length + 1];
+        return GetData(configuredData, actual, scoringMode);
+    }
+
+    public static DivisionDataVm GetData(DivisionData[] configuredData, DivisionData actual, ScoringMode scoringMode = ScoringMode.Normal)
+    {
+        if (actual.Teams is null)
+            return new DivisionDataVm();
+
+        var players = CloneConfiguredData(configuredData);
+        var divisionData = new DivisionData[players.Length + 1];
 
         divisionData[0] = actual;
 
-        for (var i = 0; i < 5; i++)
+        foreach (var player in players)
         {
-            var aTeams = actual.Teams;
-            if (aTeams is null)
-                continue;
-
-            for (var j = 0; j < configuredData?.Length; j++)
-            {
-                var cTeams = configuredData[j].Teams;
-                if (cTeams is null)
-                    continue;
-
-                if (aTeams[i].Team == cTeams[i].Team  && aTeams[i].Record != "0-0")
-                {
-                    cTeams[i].Value = 5 - i;
-                }
-            }
+            ScorePlayer(player, actual, scoringMode);
         }
 
-        var groups = configuredData.ToList()
-	        .GroupBy(c => c.Teams.Sum(t => t.Value));
+        var groups = players.ToList()
+	        .GroupBy(c => c.Teams!.Sum(t => t.Value));
 
-        var tiebreakTeam = actual.Teams.First(t => t.Team == "ATL");
-        var games = tiebreakTeam.Wins + tiebreakTeam.Losses;
-        double tiebreakPercent = games == 0 ? 0.0 : ((double)tiebreakTeam.Wins / games);
-
-		ResolveAllTies(groups, tiebreakPercent);
+		ResolveAllTies(groups, actual, scoringMode);
 
         // sort the configured data by total and team values
-        var sorted = configuredData?.ToList()
-            .OrderByDescending(c => c.Teams.Sum(t => t.Value))
-            .ThenBy(c => c.Teams[0].TieBreak)
-            .ThenByDescending(c => c.Teams[0].Value)
-            .ThenByDescending(c => c.Teams[1].Value)
-            .ThenByDescending(c => c.Teams[2].Value)
-            .ThenByDescending(c => c.Teams[3].Value)
-            .ThenByDescending(c => c.Teams[4].Value)
+        var sorted = players.ToList()
+            .OrderByDescending(c => c.Teams!.Sum(t => t.Value))
+            .ThenBy(c => c.Teams![0].TieBreak)
+            .ThenByDescending(c => c.Teams![0].Value)
+            .ThenByDescending(c => c.Teams![1].Value)
+            .ThenByDescending(c => c.Teams![2].Value)
+            .ThenByDescending(c => c.Teams![3].Value)
+            .ThenByDescending(c => c.Teams![4].Value)
             .ToList();
 
-        for (var i = 0; i < sorted?.Count; i++)
+        for (var i = 0; i < sorted.Count; i++)
         {
             divisionData[i + 1] = sorted[i];
         };
@@ -76,15 +73,111 @@ public class DivisionData
         return result;
     }
 
-    private static void ResolveAllTies(IEnumerable<IGrouping<int, DivisionData>> groups, double percent)
+    private static DivisionData[] CloneConfiguredData(DivisionData[] configuredData)
+    {
+        return configuredData
+            .Select(data => new DivisionData
+            {
+                Name = data.Name,
+                Teams = data.Teams?
+                    .Select(team => new TeamData
+                    {
+                        Team = team.Team,
+                        WinsGuess = team.WinsGuess,
+                        Value = team.Value,
+                        RankDistanceValue = team.RankDistanceValue,
+                        PairwiseBonusValue = team.PairwiseBonusValue,
+                        Record = team.Record,
+                        Streak = team.Streak,
+                        Wins = team.Wins,
+                        Losses = team.Losses
+                    })
+                    .ToArray()
+            })
+            .ToArray();
+    }
+
+    private static void ScorePlayer(DivisionData player, DivisionData actual, ScoringMode scoringMode)
+    {
+        if (scoringMode == ScoringMode.Horseshoes)
+            ScoreHorseshoes(player, actual);
+        else
+            ScoreNormal(player, actual);
+    }
+
+    private static void ScoreNormal(DivisionData player, DivisionData actual)
+    {
+        var actualTeams = actual.Teams;
+        var playerTeams = player.Teams;
+        if (actualTeams is null || playerTeams is null)
+            return;
+
+        for (var i = 0; i < actualTeams.Length; i++)
+        {
+            if (actualTeams[i].Team == playerTeams[i].Team && actualTeams[i].Record != "0-0")
+            {
+                playerTeams[i].Value = 5 - i;
+            }
+        }
+    }
+
+    private static void ScoreHorseshoes(DivisionData player, DivisionData actual)
+    {
+        var actualTeams = actual.Teams;
+        var playerTeams = player.Teams;
+        if (actualTeams is null || playerTeams is null || actualTeams.All(t => t.Record == "0-0"))
+            return;
+
+        var predictedRanks = playerTeams
+            .Select((team, index) => new { team.Team, Rank = index })
+            .ToDictionary(t => t.Team, t => t.Rank);
+
+        for (var actualRank = 0; actualRank < actualTeams.Length; actualRank++)
+        {
+            var actualTeam = actualTeams[actualRank];
+            if (!predictedRanks.TryGetValue(actualTeam.Team, out var predictedRank))
+                continue;
+
+            var slotValue = 5 - actualRank;
+            var distance = Math.Abs(predictedRank - actualRank);
+            var rankDistanceValue = Math.Max(0, slotValue - distance);
+            playerTeams[predictedRank].RankDistanceValue += rankDistanceValue;
+            playerTeams[predictedRank].Value += rankDistanceValue;
+        }
+
+        var pairwiseBonusValue = CountCorrectPairwiseOrders(playerTeams, actualTeams);
+        playerTeams[0].PairwiseBonusValue += pairwiseBonusValue;
+        playerTeams[0].Value += pairwiseBonusValue;
+    }
+
+    private static int CountCorrectPairwiseOrders(TeamData[] playerTeams, TeamData[] actualTeams)
+    {
+        var predictedRanks = playerTeams
+            .Select((team, index) => new { team.Team, Rank = index })
+            .ToDictionary(t => t.Team, t => t.Rank);
+
+        var score = 0;
+        for (var better = 0; better < actualTeams.Length; better++)
+        {
+            for (var worse = better + 1; worse < actualTeams.Length; worse++)
+            {
+                if (predictedRanks[actualTeams[better].Team] < predictedRanks[actualTeams[worse].Team])
+                    score++;
+            }
+        }
+
+        return score;
+    }
+
+    private static void ResolveAllTies(IEnumerable<IGrouping<int, DivisionData>> groups, DivisionData actual, ScoringMode scoringMode)
     {
 	    foreach (var group in groups)
 	    {
-		    ResolveGroupTies(group, percent);
+		    ResolveGroupTies(group, actual, scoringMode);
 	    }
     }
 
-    private static void ResolveGroupTies(IGrouping<int, DivisionData> group, double percent)
+    private static void ResolveGroupTies(IGrouping<int, DivisionData> group, DivisionData actual, ScoringMode scoringMode)
     {
 	    var datas = group.Where(d => d.Teams is not null).ToList();
 	    if (datas.Count < 2)
@@ -94,9 +187,21 @@ public class DivisionData
 	    for (var i = 0; i < datas.Count(); i++)
 	    {
 		    var data = datas[i];
-		    double pct = (double)data.Teams?[0].WinsGuess / 162;
-            data.Teams[0].TieBreak = Math.Abs(percent - pct);
+            var topTeam = data.Teams?[0];
+            var percent = GetActualPercent(actual, topTeam?.Team);
+		    double pct = (double)(topTeam?.WinsGuess ?? 0) / 162;
+            data.Teams![0].TieBreak = Math.Abs(percent - pct);
 	    }
+    }
+
+    private static double GetActualPercent(DivisionData actual, string? team)
+    {
+        var actualTeam = actual.Teams?.FirstOrDefault(t => t.Team == team);
+        if (actualTeam is null)
+            return 0.0;
+
+        var games = actualTeam.Wins + actualTeam.Losses;
+        return games == 0 ? 0.0 : ((double)actualTeam.Wins / games);
     }
 
     private static string[] BuildHeaders(DivisionData[] divisionData)
