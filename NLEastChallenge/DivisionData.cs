@@ -223,6 +223,9 @@ public class DivisionData
 
     private static string GetWildcardGamesBack(TeamRecord teamRecord)
     {
+        if (teamRecord.GamesPlayed < 130)
+            return "";
+
         if (teamRecord.DivisionLeader)
             return "";
 
