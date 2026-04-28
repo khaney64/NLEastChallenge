@@ -114,6 +114,20 @@ it('keeps normal scoring highlight green', async () => {
   ReactDOM.unmountComponentAtNode(div);
 });
 
+it('keeps scoring controls outside table footer', async () => {
+  const div = document.createElement('div');
+
+  await act(async () => {
+    ReactDOM.render(<Standings />, div);
+  });
+
+  expect(div.querySelector('tfoot .scoring-controls')).toBeNull();
+  expect(div.querySelector('.table-responsive > .scoring-controls')).not.toBeNull();
+  expect(div.querySelectorAll('tfoot td')).toHaveLength(normalDivisionData.footers.length);
+
+  ReactDOM.unmountComponentAtNode(div);
+});
+
 it('shows horseshoes score reason colors', async () => {
   const div = document.createElement('div');
 

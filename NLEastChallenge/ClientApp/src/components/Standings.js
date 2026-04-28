@@ -26,23 +26,6 @@ export class Standings extends Component {
             <tr key={rowIndex}>{GetRowData(row, rowIndex, mode)}</tr>
         );
         const Footers = divisionData.footers.map((footer, index) => {
-            if (index === 0) {
-                return (
-                    <td key={index} colSpan="3" className="mode-toggle-footer">
-                        <ScoringModeToggle
-                            mode={mode}
-                            showScoring={showScoring}
-                            onModeChange={onModeChange}
-                            onToggleScoring={onToggleScoring}
-                        />
-                    </td>
-                );
-            }
-
-            if (index === 1 || index === 2) {
-                return null;
-            }
-
             const header = divisionData.headers[index];
             const cls = header === 'Streak' ? 'streak-col' : header === 'Record' ? 'record-col' : '';
             return <td key={index} className={cls}>{footer}</td>;
@@ -61,6 +44,12 @@ export class Standings extends Component {
                         <tr>{Footers}</tr>
                     </tfoot>
                 </table>
+                <ScoringModeToggle
+                    mode={mode}
+                    showScoring={showScoring}
+                    onModeChange={onModeChange}
+                    onToggleScoring={onToggleScoring}
+                />
                 {showScoring && <ScoringDetails mode={mode} />}
             </div>
         );

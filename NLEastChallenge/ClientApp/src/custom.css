@@ -64,16 +64,13 @@ code {
     font-weight: bold;
 }
 
-.mode-toggle-footer {
-    text-align: left;
-    vertical-align: middle;
-}
-
 .scoring-controls {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     flex-wrap: wrap;
+    margin: 8px 0 18px;
 }
 
 .scoring-mode-toggle {
@@ -153,10 +150,6 @@ code {
 
     .standings-table {
         font-size: 0.85rem;
-    }
-
-    .mode-toggle-footer {
-        display: table-cell;
     }
 
     .scoring-mode-toggle button {
