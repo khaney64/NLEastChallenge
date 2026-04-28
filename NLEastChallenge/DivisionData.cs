@@ -45,7 +45,7 @@ public class DivisionData
         var groups = players.ToList()
 	        .GroupBy(c => c.Teams!.Sum(t => t.Value));
 
-		ResolveAllTies(groups, actual, scoringMode);
+		ResolveAllTies(groups, actual);
 
         // sort the configured data by total and team values
         var sorted = players.ToList()
@@ -169,22 +169,22 @@ public class DivisionData
         return score;
     }
 
-    private static void ResolveAllTies(IEnumerable<IGrouping<int, DivisionData>> groups, DivisionData actual, ScoringMode scoringMode)
+    private static void ResolveAllTies(IEnumerable<IGrouping<int, DivisionData>> groups, DivisionData actual)
     {
 	    foreach (var group in groups)
 	    {
-		    ResolveGroupTies(group, actual, scoringMode);
+		    ResolveGroupTies(group, actual);
 	    }
     }
 
-    private static void ResolveGroupTies(IGrouping<int, DivisionData> group, DivisionData actual, ScoringMode scoringMode)
+    private static void ResolveGroupTies(IGrouping<int, DivisionData> group, DivisionData actual)
     {
 	    var datas = group.Where(d => d.Teams is not null).ToList();
 	    if (datas.Count < 2)
 	    {
 		    return;
 	    }
-	    for (var i = 0; i < datas.Count(); i++)
+	    for (var i = 0; i < datas.Count; i++)
 	    {
 		    var data = datas[i];
             var topTeam = data.Teams?[0];
