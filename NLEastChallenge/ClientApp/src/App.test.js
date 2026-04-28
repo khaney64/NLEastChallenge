@@ -52,6 +52,22 @@ afterEach(() => {
   delete global.fetch;
 });
 
+const flushPendingPromises = () => new Promise(resolve => setTimeout(resolve, 0));
+
+const renderStandings = async (div) => {
+  await act(async () => {
+    ReactDOM.render(<Standings />, div);
+    await flushPendingPromises();
+  });
+};
+
+const clickAndFlush = async (element) => {
+  await act(async () => {
+    Simulate.click(element);
+    await flushPendingPromises();
+  });
+};
+
 it('renders without crashing', async () => {
   const div = document.createElement('div');
 
@@ -68,15 +84,11 @@ it('renders without crashing', async () => {
 it('switches standings scoring mode', async () => {
   const div = document.createElement('div');
 
-  await act(async () => {
-    ReactDOM.render(<Standings />, div);
-  });
+  await renderStandings(div);
 
   const hhButton = div.querySelector('button[aria-label="Horseshoes and hand grenades scoring"]');
 
-  await act(async () => {
-    Simulate.click(hhButton);
-  });
+  await clickAndFlush(hhButton);
 
   expect(global.fetch).toHaveBeenCalledWith('divisiondata?mode=normal');
   expect(global.fetch).toHaveBeenCalledWith('divisiondata?mode=hh');
@@ -87,15 +99,11 @@ it('switches standings scoring mode', async () => {
 it('shows current scoring explanation', async () => {
   const div = document.createElement('div');
 
-  await act(async () => {
-    ReactDOM.render(<Standings />, div);
-  });
+  await renderStandings(div);
 
   const scoringButton = div.querySelector('button[aria-label="Show scoring explanation"]');
 
-  await act(async () => {
-    Simulate.click(scoringButton);
-  });
+  await clickAndFlush(scoringButton);
 
   expect(div.textContent).toContain('Normal: exact rank matches');
 
@@ -105,9 +113,7 @@ it('shows current scoring explanation', async () => {
 it('keeps normal scoring highlight green', async () => {
   const div = document.createElement('div');
 
-  await act(async () => {
-    ReactDOM.render(<Standings />, div);
-  });
+  await renderStandings(div);
 
   expect(div.querySelectorAll('.score-normal')).toHaveLength(1);
 
@@ -117,9 +123,7 @@ it('keeps normal scoring highlight green', async () => {
 it('keeps scoring controls outside table footer', async () => {
   const div = document.createElement('div');
 
-  await act(async () => {
-    ReactDOM.render(<Standings />, div);
-  });
+  await renderStandings(div);
 
   expect(div.querySelector('tfoot .scoring-controls')).toBeNull();
   expect(div.querySelector('.table-responsive > .scoring-controls')).not.toBeNull();
@@ -131,15 +135,11 @@ it('keeps scoring controls outside table footer', async () => {
 it('shows horseshoes score reason colors', async () => {
   const div = document.createElement('div');
 
-  await act(async () => {
-    ReactDOM.render(<Standings />, div);
-  });
+  await renderStandings(div);
 
   const hhButton = div.querySelector('button[aria-label="Horseshoes and hand grenades scoring"]');
 
-  await act(async () => {
-    Simulate.click(hhButton);
-  });
+  await clickAndFlush(hhButton);
 
   expect(div.querySelectorAll('.score-rank-distance')).toHaveLength(1);
   expect(div.querySelectorAll('.score-pairwise')).toHaveLength(1);
@@ -151,20 +151,14 @@ it('shows horseshoes score reason colors', async () => {
 it('explains horseshoes score colors', async () => {
   const div = document.createElement('div');
 
-  await act(async () => {
-    ReactDOM.render(<Standings />, div);
-  });
+  await renderStandings(div);
 
   const hhButton = div.querySelector('button[aria-label="Horseshoes and hand grenades scoring"]');
   const scoringButton = div.querySelector('button[aria-label="Show scoring explanation"]');
 
-  await act(async () => {
-    Simulate.click(hhButton);
-  });
+  await clickAndFlush(hhButton);
 
-  await act(async () => {
-    Simulate.click(scoringButton);
-  });
+  await clickAndFlush(scoringButton);
 
   expect(div.textContent).toContain('green = close-enough rank points');
   expect(div.textContent).toContain('blue = order bonus only');
