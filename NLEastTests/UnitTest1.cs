@@ -85,6 +85,54 @@ namespace NLEastTests
             }));
         }
 
+        [Test]
+        public void HorseshoesScoring_SkipsActualTeamsMissingFromPredictions()
+        {
+            var actual = new DivisionData
+            {
+                Name = "Actual",
+                Teams =
+                [
+                    ActualTeam("ATL", 20, 9),
+                    ActualTeam("XXX", 18, 11),
+                    ActualTeam("MIA", 13, 16),
+                    ActualTeam("PHI", 9, 19),
+                    ActualTeam("NYM", 9, 19)
+                ]
+            };
+            var players = new[]
+            {
+                Player("Greg", ("ATL", 95), ("MIA", 90), ("PHI", 88), ("NYM", 87), ("WAS", 70))
+            };
+
+            var data = DivisionData.GetData(players, actual, ScoringMode.Horseshoes);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(data.Headers, Does.Contain("Greg"));
+                Assert.That(data.Rows, Is.Not.Empty);
+            });
+        }
+
+        [Test]
+        public void HorseshoesScoring_DuplicatePredictedTeamsKeepFirstRank()
+        {
+            var players = new[]
+            {
+                Player("Greg", ("ATL", 95), ("ATL", 90), ("MIA", 88), ("PHI", 87), ("NYM", 70))
+            };
+
+            var data = DivisionData.GetData(players, BuildActual(), ScoringMode.Horseshoes);
+            var gregColumn = Array.IndexOf(data.Headers, "Greg");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(data.Headers, Does.Contain("Greg"));
+                Assert.That(data.Rows[0][gregColumn].Team, Is.EqualTo("ATL"));
+                Assert.That(data.Rows[0][gregColumn].RankDistanceValue, Is.EqualTo(5));
+            });
+        }
+
         private static Dictionary<string, int> PlayerTotals(DivisionDataVm data)
         {
             return data.Headers

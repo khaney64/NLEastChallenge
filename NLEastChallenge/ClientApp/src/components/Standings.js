@@ -7,6 +7,7 @@ export class Standings extends Component {
     constructor(props) {
         super(props);
         this.state = { divisionData: [], loading: true, mode: 'normal', showScoring: false };
+        this.divisionDataRequest = 0;
     }
 
     componentDidMount() {
@@ -73,8 +74,15 @@ export class Standings extends Component {
     }
 
     async populateDivisionData() {
-        const response = await fetch(`divisiondata?mode=${this.state.mode}`);
+        const mode = this.state.mode;
+        const requestId = ++this.divisionDataRequest;
+        const response = await fetch(`divisiondata?mode=${mode}`);
         const data = await response.json();
+
+        if (requestId !== this.divisionDataRequest || mode !== this.state.mode) {
+            return;
+        }
+
         this.setState({ divisionData: data, loading: false });
     }
 

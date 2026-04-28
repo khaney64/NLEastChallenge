@@ -96,6 +96,47 @@ it('switches standings scoring mode', async () => {
   ReactDOM.unmountComponentAtNode(div);
 });
 
+it('ignores stale standings responses after scoring mode changes', async () => {
+  const div = document.createElement('div');
+  let resolveNormal;
+
+  global.fetch = jest.fn((url) => {
+    const path = url.toString();
+    if (path.startsWith('divisiondata?mode=normal')) {
+      return new Promise(resolve => {
+        resolveNormal = () => resolve({
+          json: () => Promise.resolve(normalDivisionData)
+        });
+      });
+    }
+
+    return Promise.resolve({
+      json: () => Promise.resolve(horseshoesDivisionData)
+    });
+  });
+
+  let standings;
+  await act(async () => {
+    standings = ReactDOM.render(<Standings />, div);
+  });
+
+  await act(async () => {
+    standings.changeMode('hh');
+    await flushPendingPromises();
+  });
+
+  await act(async () => {
+    resolveNormal();
+    await flushPendingPromises();
+  });
+
+  expect(div.textContent).toContain('Rank');
+  expect(div.textContent).toContain('Bonus');
+  expect(div.textContent).not.toContain('Greg');
+
+  ReactDOM.unmountComponentAtNode(div);
+});
+
 it('shows current scoring explanation', async () => {
   const div = document.createElement('div');
 

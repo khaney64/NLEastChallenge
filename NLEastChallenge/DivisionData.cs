@@ -128,14 +128,12 @@ public class DivisionData
         if (actualTeams is null || playerTeams is null || actualTeams.All(t => t.Record == "0-0"))
             return;
 
-        var predictedRanks = playerTeams
-            .Select((team, index) => new { team.Team, Rank = index })
-            .ToDictionary(t => t.Team, t => t.Rank);
+        var predictedRanks = BuildPredictedRankMap(playerTeams);
 
         for (var actualRank = 0; actualRank < actualTeams.Length; actualRank++)
         {
             var actualTeam = actualTeams[actualRank];
-            if (!predictedRanks.TryGetValue(actualTeam.Team, out var predictedRank))
+            if (actualTeam.Team is null || !predictedRanks.TryGetValue(actualTeam.Team, out var predictedRank))
                 continue;
 
             var slotValue = 5 - actualRank;
@@ -152,21 +150,43 @@ public class DivisionData
 
     private static int CountCorrectPairwiseOrders(TeamData[] playerTeams, TeamData[] actualTeams)
     {
-        var predictedRanks = playerTeams
-            .Select((team, index) => new { team.Team, Rank = index })
-            .ToDictionary(t => t.Team, t => t.Rank);
+        var predictedRanks = BuildPredictedRankMap(playerTeams);
 
         var score = 0;
         for (var better = 0; better < actualTeams.Length; better++)
         {
             for (var worse = better + 1; worse < actualTeams.Length; worse++)
             {
-                if (predictedRanks[actualTeams[better].Team] < predictedRanks[actualTeams[worse].Team])
+                var betterTeam = actualTeams[better].Team;
+                var worseTeam = actualTeams[worse].Team;
+                if (betterTeam is null || worseTeam is null)
+                    continue;
+
+                if (!predictedRanks.TryGetValue(betterTeam, out var betterRank) ||
+                    !predictedRanks.TryGetValue(worseTeam, out var worseRank))
+                    continue;
+
+                if (betterRank < worseRank)
                     score++;
             }
         }
 
         return score;
+    }
+
+    private static Dictionary<string, int> BuildPredictedRankMap(TeamData[] teams)
+    {
+        var predictedRanks = new Dictionary<string, int>();
+        for (var index = 0; index < teams.Length; index++)
+        {
+            var team = teams[index].Team;
+            if (team is null || predictedRanks.ContainsKey(team))
+                continue;
+
+            predictedRanks.Add(team, index);
+        }
+
+        return predictedRanks;
     }
 
     private static void ResolveAllTies(IEnumerable<IGrouping<int, DivisionData>> groups, DivisionData actual)
