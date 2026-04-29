@@ -105,6 +105,14 @@ code {
     outline-offset: 1px;
 }
 
+.scoring-mode-icon {
+    display: block;
+    width: 20px;
+    height: 20px;
+    margin: 0 auto;
+    object-fit: contain;
+}
+
 .scoring-help-button {
     width: 22px;
     height: 22px;
@@ -157,6 +165,11 @@ code {
         height: 24px;
         padding: 0;
         font-size: 0.75rem;
+    }
+
+    .scoring-mode-icon {
+        width: 17px;
+        height: 17px;
     }
 
     .scoring-help-button {

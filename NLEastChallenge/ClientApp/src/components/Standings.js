@@ -1,5 +1,6 @@
 import React, { Component, useState } from 'react';
 import { Tooltip } from 'reactstrap';
+import horseshoeIcon from '../images/horseshoe.png';
 
 export class Standings extends Component {
     static displayName = Standings.name;
@@ -123,7 +124,7 @@ function ScoringModeToggle({ mode, showScoring, onModeChange, onToggleScoring })
                     aria-pressed={mode === 'hh'}
                     title="Horseshoes and hand grenades scoring"
                 >
-                    <span aria-hidden="true">🧲</span>
+                    <img className="scoring-mode-icon" src={horseshoeIcon} alt="" aria-hidden="true" />
                 </button>
             </div>
             <button
