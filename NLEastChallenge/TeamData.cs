@@ -18,6 +18,10 @@ public class TeamData
 
     public int Value { get; set; }
 
+    public int RankDistanceValue { get; set; }
+
+    public int PairwiseBonusValue { get; set; }
+
     public string Record { get; set; } = String.Empty;
 
     public string Streak { get; set; } = String.Empty;
