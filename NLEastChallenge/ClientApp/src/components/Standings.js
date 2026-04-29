@@ -144,11 +144,11 @@ function ScoringModeToggle({ mode, showScoring, onModeChange, onToggleScoring })
 function ScoringDetails({ mode }) {
     const lines = mode === 'hh'
         ? [
-            'Horseshoes and hand grenades: teams score close-enough points by rank distance, plus one bonus point for each correctly ordered team pair. If players tie, the tie breaker compares each player top pick wins percentage to that same team current winning percentage. Closest absolute difference wins, so being over or under counts the same.',
+            'Horseshoes and hand grenades: teams score close-enough points by rank distance, plus one bonus point for each correctly ordered team pair. If players tie, the tie breaker compares each player top pick wins percentage to that same team current winning percentage. Closest absolute difference wins, with a nod to the under in the event of a tie.',
             'Colors show why a pick scored: green = close-enough rank points, blue = order bonus only, teal = both.'
         ]
         : [
-            'Normal: exact rank matches score 5 points for first place through 1 point for last place. If players tie, the tie breaker compares each player top pick wins percentage to that same team current winning percentage. Closest absolute difference wins, so being over or under counts the same.'
+            'Normal: exact rank matches score 5 points for first place through 1 point for last place. If players tie, the tie breaker compares each player top pick wins percentage to that same team current winning percentage. Closest absolute difference wins, with a nod to the under in the event of a tie.'
         ];
 
     return (
