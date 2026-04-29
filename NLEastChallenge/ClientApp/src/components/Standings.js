@@ -100,14 +100,17 @@ export class Standings extends Component {
 }
 
 function ScoringModeToggle({ mode, showScoring, onModeChange, onToggleScoring }) {
+    const scoringHelpLabel = showScoring ? 'Hide scoring explanation' : 'Show scoring explanation';
+
     return (
         <div className="scoring-controls">
-            <div className="scoring-mode-toggle" aria-label="Scoring mode">
+            <div className="scoring-mode-toggle" role="group" aria-label="Scoring mode">
                 <button
                     type="button"
                     className={mode === 'normal' ? 'active' : ''}
                     onClick={() => onModeChange('normal')}
                     aria-label="Normal scoring"
+                    aria-pressed={mode === 'normal'}
                     title="Normal scoring"
                 >
                     <span aria-hidden="true">⚾</span>
@@ -117,6 +120,7 @@ function ScoringModeToggle({ mode, showScoring, onModeChange, onToggleScoring })
                     className={mode === 'hh' ? 'active' : ''}
                     onClick={() => onModeChange('hh')}
                     aria-label="Horseshoes and hand grenades scoring"
+                    aria-pressed={mode === 'hh'}
                     title="Horseshoes and hand grenades scoring"
                 >
                     <span aria-hidden="true">🧲</span>
@@ -127,8 +131,8 @@ function ScoringModeToggle({ mode, showScoring, onModeChange, onToggleScoring })
                 className="scoring-help-button"
                 onClick={onToggleScoring}
                 aria-expanded={showScoring}
-                aria-label="Show scoring explanation"
-                title="Show scoring explanation"
+                aria-label={scoringHelpLabel}
+                title={scoringHelpLabel}
             >
                 ?
             </button>

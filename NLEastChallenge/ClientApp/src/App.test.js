@@ -86,12 +86,21 @@ it('switches standings scoring mode', async () => {
 
   await renderStandings(div);
 
+  const normalButton = div.querySelector('button[aria-label="Normal scoring"]');
   const hhButton = div.querySelector('button[aria-label="Horseshoes and hand grenades scoring"]');
 
+  expect(normalButton.getAttribute('aria-pressed')).toBe('true');
+  expect(hhButton.getAttribute('aria-pressed')).toBe('false');
+
   await clickAndFlush(hhButton);
+  await act(async () => {
+    await flushPendingPromises();
+  });
 
   expect(global.fetch).toHaveBeenCalledWith('divisiondata?mode=normal');
   expect(global.fetch).toHaveBeenCalledWith('divisiondata?mode=hh');
+  expect(div.querySelector('button[aria-label="Normal scoring"]').getAttribute('aria-pressed')).toBe('false');
+  expect(div.querySelector('button[aria-label="Horseshoes and hand grenades scoring"]').getAttribute('aria-pressed')).toBe('true');
 
   ReactDOM.unmountComponentAtNode(div);
 });
@@ -144,8 +153,12 @@ it('shows current scoring explanation', async () => {
 
   const scoringButton = div.querySelector('button[aria-label="Show scoring explanation"]');
 
+  expect(scoringButton.getAttribute('title')).toBe('Show scoring explanation');
+
   await clickAndFlush(scoringButton);
 
+  expect(scoringButton.getAttribute('aria-label')).toBe('Hide scoring explanation');
+  expect(scoringButton.getAttribute('title')).toBe('Hide scoring explanation');
   expect(div.textContent).toContain('Normal: exact rank matches');
 
   ReactDOM.unmountComponentAtNode(div);
