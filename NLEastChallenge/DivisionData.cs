@@ -204,24 +204,90 @@ public class DivisionData
 	    {
 		    return;
 	    }
-	    for (var i = 0; i < datas.Count; i++)
-	    {
-		    var data = datas[i];
-            var topTeam = data.Teams?[0];
-            var percent = GetActualPercent(actual, topTeam?.Team);
-		    double pct = (double)(topTeam?.WinsGuess ?? 0) / 162;
-            data.Teams![0].TieBreak = Math.Abs(percent - pct);
-	    }
+
+        var nextTieBreak = 0;
+        AssignTieBreaks(datas, actual, 0, null, ref nextTieBreak);
     }
 
-    private static double GetActualPercent(DivisionData actual, string? team)
+    private static void AssignTieBreaks(List<DivisionData> datas, DivisionData actual, int rank, int? underFallbackRank, ref int nextTieBreak)
     {
-        var actualTeam = actual.Teams?.FirstOrDefault(t => t.Team == team);
-        if (actualTeam is null)
-            return 0.0;
+        var distanceGroups = datas
+            .GroupBy(data => GetGuessDistance(data, actual, rank))
+            .OrderBy(group => group.Key);
 
-        var games = actualTeam.Wins + actualTeam.Losses;
-        return games == 0 ? 0.0 : ((double)actualTeam.Wins / games);
+        foreach (var distanceGroup in distanceGroups)
+        {
+            var tiedDatas = distanceGroup.ToList();
+            if (tiedDatas.Count == 1)
+            {
+                tiedDatas[0].Teams![0].TieBreak = nextTieBreak++;
+                continue;
+            }
+
+            var fallbackRank = HasDifferentWinGuesses(tiedDatas, rank) ? rank : underFallbackRank;
+
+            if (AllHaveWinGuess(tiedDatas, rank + 1))
+            {
+                AssignTieBreaks(tiedDatas, actual, rank + 1, fallbackRank, ref nextTieBreak);
+                continue;
+            }
+
+            AssignUnderTieBreaks(tiedDatas, fallbackRank, ref nextTieBreak);
+        }
+    }
+
+    private static void AssignUnderTieBreaks(List<DivisionData> datas, int? rank, ref int nextTieBreak)
+    {
+        if (rank is null)
+        {
+            foreach (var data in datas)
+            {
+                data.Teams![0].TieBreak = nextTieBreak;
+            }
+
+            nextTieBreak++;
+            return;
+        }
+
+        foreach (var underGroup in datas.GroupBy(data => GetWinGuess(data, rank.Value)).OrderBy(group => group.Key))
+        {
+            foreach (var data in underGroup)
+            {
+                data.Teams![0].TieBreak = nextTieBreak;
+            }
+
+            nextTieBreak++;
+        }
+    }
+
+    private static bool HasDifferentWinGuesses(IEnumerable<DivisionData> datas, int rank)
+    {
+        return datas.Select(data => GetWinGuess(data, rank)).Distinct().Skip(1).Any();
+    }
+
+    private static bool AllHaveWinGuess(IEnumerable<DivisionData> datas, int rank)
+    {
+        return datas.All(data => GetWinGuess(data, rank) != 0);
+    }
+
+    private static int GetGuessDistance(DivisionData data, DivisionData actual, int rank)
+    {
+        return Math.Abs(GetWinGuess(data, rank) - GetActualWins(actual, GetTeam(data, rank)));
+    }
+
+    private static int GetWinGuess(DivisionData data, int rank)
+    {
+        return data.Teams is not null && rank < data.Teams.Length ? data.Teams[rank].WinsGuess : 0;
+    }
+
+    private static string? GetTeam(DivisionData data, int rank)
+    {
+        return data.Teams is not null && rank < data.Teams.Length ? data.Teams[rank].Team : null;
+    }
+
+    private static int GetActualWins(DivisionData actual, string? team)
+    {
+        return actual.Teams?.FirstOrDefault(t => t.Team == team)?.Wins ?? 0;
     }
 
     private static string[] BuildHeaders(DivisionData[] divisionData)

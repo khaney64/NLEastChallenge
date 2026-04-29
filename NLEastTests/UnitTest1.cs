@@ -41,6 +41,81 @@ namespace NLEastTests
         }
 
         [Test]
+        public void NormalScoring_GivesEqualDistanceTopTeamTieToUnderWhenNextPickUnavailable()
+        {
+            var actual = BuildTieBreakerActual();
+            var players = new[]
+            {
+                Player("Over", ("PHI", 91), ("NYM", 0), ("ATL", 0), ("MIA", 0), ("WAS", 0)),
+                Player("Under", ("PHI", 89), ("NYM", 0), ("ATL", 0), ("MIA", 0), ("WAS", 0))
+            };
+
+            var data = DivisionData.GetData(players, actual, ScoringMode.Normal);
+
+            Assert.That(data.Headers.Skip(3), Is.EqualTo(new[] { "Under", "Over" }));
+        }
+
+        [Test]
+        public void NormalScoring_UsesSecondPickBeforeUnderPreference()
+        {
+            var actual = BuildTieBreakerActual();
+            var players = new[]
+            {
+                Player("TopUnderSecondFarther", ("PHI", 89), ("NYM", 82), ("ATL", 0), ("MIA", 0), ("WAS", 0)),
+                Player("TopOverSecondCloser", ("PHI", 91), ("NYM", 81), ("ATL", 0), ("MIA", 0), ("WAS", 0))
+            };
+
+            var data = DivisionData.GetData(players, actual, ScoringMode.Normal);
+
+            Assert.That(data.Headers.Skip(3), Is.EqualTo(new[] { "TopOverSecondCloser", "TopUnderSecondFarther" }));
+        }
+
+        [Test]
+        public void NormalScoring_UsesThirdPickWhenFirstTwoPicksRemainTied()
+        {
+            var actual = BuildTieBreakerActual();
+            var players = new[]
+            {
+                Player("ThirdFarther", ("PHI", 89), ("NYM", 81), ("ATL", 72), ("MIA", 0), ("WAS", 0)),
+                Player("ThirdCloser", ("PHI", 91), ("NYM", 79), ("ATL", 70), ("MIA", 0), ("WAS", 0))
+            };
+
+            var data = DivisionData.GetData(players, actual, ScoringMode.Normal);
+
+            Assert.That(data.Headers.Skip(3), Is.EqualTo(new[] { "ThirdCloser", "ThirdFarther" }));
+        }
+
+        [Test]
+        public void NormalScoring_FallsBackToTopTeamUnderWhenSecondPickAlsoTiesAndThirdPickUnavailable()
+        {
+            var actual = BuildTieBreakerActual();
+            var players = new[]
+            {
+                Player("TopOver", ("PHI", 91), ("NYM", 80), ("ATL", 0), ("MIA", 0), ("WAS", 0)),
+                Player("TopUnder", ("PHI", 89), ("NYM", 80), ("ATL", 0), ("MIA", 0), ("WAS", 0))
+            };
+
+            var data = DivisionData.GetData(players, actual, ScoringMode.Normal);
+
+            Assert.That(data.Headers.Skip(3), Is.EqualTo(new[] { "TopUnder", "TopOver" }));
+        }
+
+        [Test]
+        public void HorseshoesScoring_GivesEqualDistanceTopTeamTieToUnderWhenNextPickUnavailable()
+        {
+            var actual = BuildTieBreakerActual();
+            var players = new[]
+            {
+                Player("Over", ("PHI", 91), ("NYM", 0), ("ATL", 0), ("MIA", 0), ("WAS", 0)),
+                Player("Under", ("PHI", 89), ("NYM", 0), ("ATL", 0), ("MIA", 0), ("WAS", 0))
+            };
+
+            var data = DivisionData.GetData(players, actual, ScoringMode.Horseshoes);
+
+            Assert.That(data.Headers.Skip(3), Is.EqualTo(new[] { "Under", "Over" }));
+        }
+
+        [Test]
         public void HorseshoesScoring_UsesRankDistanceAndPairwiseBonus()
         {
             var data = DivisionData.GetData(BuildPlayers(), BuildActual(), ScoringMode.Horseshoes);
@@ -167,6 +242,22 @@ namespace NLEastTests
                 Wins = wins,
                 Losses = losses,
                 Record = $"{wins}-{losses}"
+            };
+        }
+
+        private static DivisionData BuildTieBreakerActual()
+        {
+            return new DivisionData
+            {
+                Name = "Actual",
+                Teams =
+                [
+                    ActualTeam("PHI", 90, 72),
+                    ActualTeam("NYM", 80, 82),
+                    ActualTeam("ATL", 70, 92),
+                    ActualTeam("MIA", 60, 102),
+                    ActualTeam("WAS", 50, 112)
+                ]
             };
         }
 
