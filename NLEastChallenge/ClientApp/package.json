@@ -50,6 +50,7 @@
       "ws": "7.5.10"
     },
     "picomatch": "2.3.2",
+    "shell-quote": "1.8.4",
     "webpack-dev-server": {
       "ws": "8.17.1"
     }
