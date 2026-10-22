@@ -21,9 +21,9 @@ const target = env.ASPNETCORE_HTTPS_PORT ? `https://localhost:${env.ASPNETCORE_H
 
 const backend = { target, secure: false };
 
-export default defineConfig(({ command }) => {
+export default defineConfig(({ command, mode }) => {
   const { certFilePath, https } = loadDevCert();
-  if (command === 'serve' && !https) {
+  if (command === 'serve' && mode !== 'test' && !https) {
     console.warn(`ASP.NET Core dev certificate not found at ${certFilePath}; the dev server is running over HTTP, so the SPA proxy (https://localhost:44403) will fail to connect. Run "npm start" so aspnetcore-https.js exports it.`);
   }
 

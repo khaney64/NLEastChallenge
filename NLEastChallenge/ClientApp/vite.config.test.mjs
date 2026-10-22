@@ -4,7 +4,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import configFn from './vite.config.mjs';
 
-const resolve = (command) => configFn({ command, mode: 'test' });
+const resolve = (command, mode = 'test') => configFn({ command, mode });
 
 describe('vite.config', () => {
   const originalName = process.env.npm_package_name;
@@ -47,10 +47,20 @@ describe('vite.config', () => {
     vi.spyOn(fs, 'existsSync').mockReturnValue(false);
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    const config = resolve('serve');
+    const config = resolve('serve', 'development');
 
     expect(config.server.https).toBeUndefined();
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('dev certificate not found'));
+  });
+
+  it('does not warn about a missing dev cert when Vitest resolves the config in test mode', () => {
+    vi.spyOn(fs, 'existsSync').mockReturnValue(false);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const config = resolve('serve', 'test');
+
+    expect(config.server.https).toBeUndefined();
+    expect(warn).not.toHaveBeenCalled();
   });
 
   it('does not warn about a missing dev cert during build', () => {
