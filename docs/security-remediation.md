@@ -103,7 +103,7 @@ This is the root-cause fix and should clear most of the 86 alerts. Scope is the 
 
 Covered by `build.sourcemap: false` in item 1. Since the 2026-10-22 deploy, `/static/js/main.51a12831.js.map` and `/assets/*.map` return 404 on production.
 
-### 3. Clear remaining Dependabot alerts: `in progress`, waiting for Dependabot to auto-close
+### 3. Clear remaining Dependabot alerts: `done`
 
 Triage whatever is left after the migration. Bump direct dependencies, use npm `overrides` for transitives, and dismiss with a written reason anything dev-only that has no fix.
 
@@ -116,7 +116,7 @@ Triage whatever is left after the migration. Bump direct dependencies, use npm `
 | #217 | `baseline-browser-mapping` | 2.11.30 (fix is 2.11.0), via `eslint-plugin-react-hooks` |
 | #216, #218, #219, #222, #223, #225 | `colord`, `svgo` ×2, `fast-uri`, `postcss-selector-parser`, `compression` | not installed (CRA only) |
 
-Next: if they are still open after Dependabot's next pass, dismiss each as "Inaccurate" with the reason from the table. Not dismissed yet, by choice.
+2026-10-22: after Dependabot was restarted, all 10 closed as fixed with none dismissed. **Open alerts: 0** (199 fixed in total). No code change or override was needed.
 
 ### 4. Upgrade React 17 → 18/19 and react-router 5 → 7: `todo`, after 1
 
