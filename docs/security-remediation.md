@@ -46,7 +46,7 @@ This is the root-cause fix and should clear most of the 86 alerts. Scope is the 
   - The CRA dev server then serves HTTPS on 44403 (`.env.development`: `PORT=44403`, `HTTPS=true`).
   - `src/setupProxy.js` forwards `/divisiondata` and `/gamedata` to the backend.
 - **How production works:** `PublishRunWebpack` in the csproj runs `npm install` and `npm run build`, then copies `ClientApp/build/**` into `wwwroot`. `Program.cs` serves it with `UseStaticFiles` and `MapFallbackToFile("index.html")`.
-- **Deploy target:** there is a single site, production App Service `NLEastChallenge` (Linux, `DOTNETCORE|8.0`), in resource group `NLEastRG`. Its subscription is `3d6572f6-2e54-4530-a484-2847d25e01fa` in tenant `55117e3a-e992-480d-8f42-095cd729530a`, not the default `az` login. There is no beta or staging site.
+- **Deploy target:** there is a single site, production App Service `NLEastChallenge` (Linux; runtime stack must match the target framework, see item 5), in resource group `NLEastRG`. Its subscription is `3d6572f6-2e54-4530-a484-2847d25e01fa` in tenant `55117e3a-e992-480d-8f42-095cd729530a`, not the default `az` login. There is no beta or staging site.
 - **How to deploy:** the Visual Studio Zip Deploy profile (`NLEastChallenge/Properties/PublishProfiles/`) loses its saved password and then fails with "The ZipDeploy task was not given a value for the required parameter DestinationUsername". The Azure CLI uses your `az` login instead:
   ```
   az login --tenant 55117e3a-e992-480d-8f42-095cd729530a
@@ -93,40 +93,65 @@ This is the root-cause fix and should clear most of the 86 alerts. Scope is the 
   - `dotnet publish` output has `wwwroot/index.html`.
 - [x] Deploy to production and check the same three pages, plus that `/static/js/*.js.map` and `/assets/*.map` no longer download.
   - 2026-10-22: deployed with `az webapp deploy --clean true`. Standings render with live data, Games Today and Upcoming render (empty in the offseason), the refresh icon loads, and the console is clean. The old and new `.map` URLs and `/service-worker.js` return 404.
-- [ ] After merge, re-count open Dependabot alerts and record the number here:
+- [x] After merge, re-count open Dependabot alerts and record the number here:
   `MSYS_NO_PATHCONV=1 gh api "repos/khaney64/NLEastChallenge/dependabot/alerts?state=open&per_page=100" --paginate --jq length`.
-  - 2026-10-22, after deploy: still 86, but every alert was last updated 2026-10-21. Dependabot had not rescanned the merged lockfile yet, and `npm audit` on it reports 0 vulnerabilities. Recount later.
-- [ ] After merge, confirm alerts **#239** (CVE-2026-111755, GHSA-8r9p-f939-6h3c) and **#240** (CVE-2026-111756, GHSA-q3jh-wrc6-jgq8) show as fixed. Both are high-severity `follow-redirects` 1.16.0 credential-header leaks, fixed in 1.16.1. Added 2026-10-22. `follow-redirects` came in only through the CRA dev server's proxy chain (`http-proxy`); the `vite-migration` lockfile no longer contains it (`npm ls follow-redirects` is empty), so the migration closes both. If they stay open, add `"follow-redirects": ">=1.16.1"` to `overrides` (item 3).
+  - 2026-10-22, after deploy: still 86, but every alert was last updated 2026-10-21. GitHub's dependency graph had not picked up the merged lockfile (its SBOM still listed `react-scripts`), and `npm audit` on it reports 0 vulnerabilities.
+  - 2026-10-22, after the dependency graph caught up: **10 open** (down from 86). See item 3.
+- [x] After merge, confirm alerts **#239** (CVE-2026-111755, GHSA-8r9p-f939-6h3c) and **#240** (CVE-2026-111756, GHSA-q3jh-wrc6-jgq8) show as fixed. Both closed as fixed 2026-10-22 20:37 UTC. Both are high-severity `follow-redirects` 1.16.0 credential-header leaks, fixed in 1.16.1. Added 2026-10-22. `follow-redirects` came in only through the CRA dev server's proxy chain (`http-proxy`); the `vite-migration` lockfile no longer contains it (`npm ls follow-redirects` is empty), so the migration closes both. If they stay open, add `"follow-redirects": ">=1.16.1"` to `overrides` (item 3).
 
 ### 2. Stop publishing the JavaScript source map: `done`
 
 Covered by `build.sourcemap: false` in item 1. Since the 2026-10-22 deploy, `/static/js/main.51a12831.js.map` and `/assets/*.map` return 404 on production.
 
-### 3. Clear remaining Dependabot alerts: `todo`, start once Dependabot has rescanned after item 1
+### 3. Clear remaining Dependabot alerts: `in progress`, waiting for Dependabot to auto-close
 
 Triage whatever is left after the migration. Bump direct dependencies, use npm `overrides` for transitives, and dismiss with a written reason anything dev-only that has no fix.
+
+2026-10-22 triage of the 10 open alerts: none needs a code change. The alerts were last updated at 20:37 UTC. The dependency graph rebuilt at 20:39 is correct (378 npm packages, `vite` 8.2.4, no `react-scripts`), and `npm audit` reports 0.
+
+| Alerts | Package | Current lockfile |
+|---|---|---|
+| #226 | `brace-expansion` | 1.1.21 (fixed version), via `eslint-plugin-react` |
+| #220, #221 | `js-yaml` | 4.3.2 (fixed version), via `eslint` |
+| #217 | `baseline-browser-mapping` | 2.11.30 (fix is 2.11.0), via `eslint-plugin-react-hooks` |
+| #216, #218, #219, #222, #223, #225 | `colord`, `svgo` ×2, `fast-uri`, `postcss-selector-parser`, `compression` | not installed (CRA only) |
+
+Next: if they are still open after Dependabot's next pass, dismiss each as "Inaccurate" with the reason from the table. Not dismissed yet, by choice.
 
 ### 4. Upgrade React 17 → 18/19 and react-router 5 → 7: `todo`, after 1
 
 React 17 and react-router 5 are out of active support. Reactstrap 8 also needs a major bump (9.x) to work with React 18 and Bootstrap 5.
 
-### 5. .NET maintenance: `todo`
+### 5. .NET maintenance: `in progress` (branch `dotnet10`; production deploy remaining)
 
-- .NET 8 LTS support ends 2026-11-10. Retarget to `net10.0`.
-- Remove `Microsoft.AspNetCore.Http.Features` 5.0.17. It is an out-of-support 5.0-era package; the types come from the shared framework on net8+.
-- Fix the `Microsoft.Extensions.*` 9.0.2 references, which resolve to 9.0.3 with NU1603 warnings. Move to versions matching the target framework.
+- [x] .NET 8 LTS support ends 2026-11-10. Retarget to `net10.0` (both `NLEastChallenge` and `NLEastTests`).
+- [x] Remove `Microsoft.AspNetCore.Http.Features` 5.0.17. It is an out-of-support 5.0-era package; the types come from the shared framework on net8+.
+- [x] Fix the `Microsoft.Extensions.*` 9.0.2 references, which resolve to 9.0.3 with NU1603 warnings. Move to versions matching the target framework.
+  - 2026-10-22: removed `Microsoft.Extensions.Caching.Memory` and `Microsoft.Extensions.Primitives` entirely. The ASP.NET Core shared framework ships both at the framework's version, so the explicit references were only pinning them out of step. The NU1603 warnings are gone.
+- [x] `Microsoft.AspNetCore.SpaProxy` 8.0.13 → 10.0.13, to match the framework.
+- [x] Verify locally (2026-10-22):
+  - `dotnet build`: 0 errors. The 6 remaining warnings are the existing nullable warnings in the controllers.
+  - `dotnet test`: 11/11 pass on net10.0.
+  - `dotnet list package --vulnerable --include-transitive --source https://api.nuget.org/v3/index.json`: none.
+  - `dotnet run`: the SPA proxy serves on 44403, and `/divisiondata` (both modes) and `/gamedata/*` return 200.
+  - `dotnet publish -r linux-x64`: runtimeconfig targets `net10.0`.
+- [ ] Deploy. Switch the App Service runtime to .NET 10 **in the same step as the deploy**. Each Linux runtime image ships only its own .NET version: the net10 build won't start on `DOTNETCORE|8.0`, and the running net8 build won't start on `DOTNETCORE|10.0`. Change both together:
+  ```
+  az webapp config set -g NLEastRG -n NLEastChallenge --subscription 3d6572f6-2e54-4530-a484-2847d25e01fa --linux-fx-version "DOTNETCORE|10.0"
+  ```
+  then `az webapp deploy … --clean true` as in item 1. Rollback: set `DOTNETCORE|8.0` and redeploy `main` from before this change.
 
 ### 6. Verify App Service configuration: `todo`
 
 Log in to the subscription that hosts `nleastchallenge` (`az login --tenant 55117e3a-e992-480d-8f42-095cd729530a`; see item 1) and confirm:
-
-Seen 2026-10-22 while deploying: runtime is `DOTNETCORE|8.0`, and both SCM and FTP basic-auth publishing credentials are allowed. SCM basic auth is what the Visual Studio profile uses, but `az webapp deploy` doesn't need it. If nothing else needs them, consider disabling both.
 
 - runtime stack matches the target framework after item 5
 - `httpsOnly: true`
 - `minTlsVersion` is 1.2 or higher
 - `ftpsState` is `Disabled` or `FtpsOnly`
 - no unexpected app settings or secrets
+
+Seen 2026-10-22 while deploying: runtime is `DOTNETCORE|8.0`, and both SCM and FTP basic-auth publishing credentials are allowed. SCM basic auth is what the Visual Studio profile uses, but `az webapp deploy` doesn't need it. If nothing else needs them, consider disabling both.
 
 ### 7. Developer machine Node.js: `done`
 
