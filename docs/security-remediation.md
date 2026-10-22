@@ -25,7 +25,7 @@ Not verified: the App Service configuration (runtime stack, HTTPS-only, minimum 
 
 Status values: `todo`, `in progress`, `done`, `wontfix`.
 
-### 1. Migrate ClientApp from Create React App to Vite: `todo`
+### 1. Migrate ClientApp from Create React App to Vite: `in progress` (branch `vite-migration`; deploy and alert recount remaining)
 
 This is the root-cause fix and should clear most of the 86 alerts. Scope is the build toolchain only: keep React 17, react-router 5 and reactstrap 8 as they are (upgrades are item 4).
 
@@ -48,34 +48,35 @@ This is the root-cause fix and should clear most of the 86 alerts. Scope is the 
 
 #### Checklist
 
-- [ ] Replace `react-scripts` with `vite` and `@vitejs/plugin-react`. Pin exact versions, as 3H.Admin does. Set `"engines": { "node": ">=24.0.0" }`.
-- [ ] Move `public/index.html` to `ClientApp/index.html`:
+- [x] Replace `react-scripts` with `vite` and `@vitejs/plugin-react`. Pin exact versions, as 3H.Admin does. Set `"engines": { "node": ">=24.0.0" }`.
+- [x] Move `public/index.html` to `ClientApp/index.html`:
   - Add `<script type="module" src="/src/index.jsx"></script>`.
   - Replace every `%PUBLIC_URL%` (the `<base href>`, manifest and favicon links) with `/`.
   - Keep `<base href="/">`. `src/index.js` reads it to set `<BrowserRouter basename>`. Alternatively switch that to `import.meta.env.BASE_URL`.
   - `public/manifest.json` and `favicon.ico` can stay in `public/`; Vite copies them unchanged.
-- [ ] JSX lives in `.js` files: `App.js`, `App.test.js`, `index.js`, and `components/Home.js`, `Layout.js`, `Standings.js`, `Games.js`, `UpcomingGames.js`. Rename them to `.jsx` (simplest) and fix the imports.
-- [ ] Fix the CommonJS image import in `components/Games.js` line 54: `src={require('../images/refresh2.png')}` → `import refreshIcon from '../images/refresh2.png'`, then `src={refreshIcon}`. `Standings.js` already uses an `import`.
-- [ ] Port `src/setupProxy.js` to `server.proxy` in `vite.config.mjs`:
+- [x] JSX lives in `.js` files: `App.js`, `App.test.js`, `index.js`, and `components/Home.js`, `Layout.js`, `Standings.js`, `Games.js`, `UpcomingGames.js`. Rename them to `.jsx` (simplest) and fix the imports.
+- [x] Fix the CommonJS image import in `components/Games.js` line 54: `src={require('../images/refresh2.png')}` → `import refreshIcon from '../images/refresh2.png'`, then `src={refreshIcon}`. `Standings.js` already uses an `import`.
+- [x] Port `src/setupProxy.js` to `server.proxy` in `vite.config.mjs`:
   - Paths `/divisiondata` and `/gamedata`, with `secure: false`.
   - Keep its target resolution: `ASPNETCORE_HTTPS_PORT` → `https://localhost:<port>`, else the first entry of `ASPNETCORE_URLS`, else `http://localhost:3078`.
   - Delete `setupProxy.js` and drop `http-proxy-middleware` (and its `overrides` entry).
-- [ ] Dev HTTPS:
+- [x] Dev HTTPS:
   - `server: { port: 44403, strictPort: true, https: { key, cert } }`, reading the `.pem`/`.key` from `%APPDATA%\ASP.NET\https\nleastchallenge.*`.
   - Keep `aspnetcore-https.js` as `prestart`, so the cert exists before Vite starts.
   - Delete `aspnetcore-react.js` and all three env files (`.env`, `.env.development`, `.env.development.local`). Vite config replaces them.
-- [ ] Build: `build.outDir: 'build'`, so the csproj `DistFiles` (`$(SpaRoot)build\**`) keeps working, and `build.sourcemap: false` (closes item 2).
-- [ ] Service worker: `index.js` already calls `serviceWorkerRegistration.unregister()`. Replace `serviceWorkerRegistration.js` with a minimal unregister so browsers that installed the old worker drop it. Delete `service-worker.js` and every `workbox-*` dependency. These are the only files that use `process.env`.
-- [ ] `reportWebVitals()` is called with no callback, so it does nothing. Delete `reportWebVitals.js`, its call, and `web-vitals`.
-- [ ] Tests: switch `npm test` to Vitest (`environment: 'jsdom'`, `globals: true`, `exclude` as in 3H.Admin).
+- [x] Build: `build.outDir: 'build'`, so the csproj `DistFiles` (`$(SpaRoot)build\**`) keeps working, and `build.sourcemap: false` (closes item 2).
+- [x] Service worker: `index.js` already calls `serviceWorkerRegistration.unregister()`. Replace `serviceWorkerRegistration.js` with a minimal unregister so browsers that installed the old worker drop it. Delete `service-worker.js` and every `workbox-*` dependency. These are the only files that use `process.env`.
+- [x] `reportWebVitals()` is called with no callback, so it does nothing. Delete `reportWebVitals.js`, its call, and `web-vitals`.
+- [x] Tests: switch `npm test` to Vitest (`environment: 'jsdom'`, `globals: true`, `exclude` as in 3H.Admin).
   - `App.test.js` calls `jest.fn` twice; change both to `vi.fn` (with `globals: true`, `vi` is global).
   - Everything else (`react-dom/test-utils` `act`/`Simulate`, `ReactDOM.render`) works unchanged on React 17.
   - All 8 tests must pass.
-- [ ] Lint: replace `eslint-config-react-app` / eslint 7 / `eslint-plugin-flowtype` with eslint 9 flat config based on 3H.Admin's `eslint.config.mjs`, or drop the `lint` script. Either is fine; record which in the PR.
-- [ ] Remove unused dependencies: `oidc-client`, `jquery`, `merge`, `rimraf`, `web-vitals`, `nan`, `ajv`, `typescript`, `cross-env`, `@babel/plugin-proposal-private-property-in-object`, and the `overrides` block. None appear in the live bundle; confirm with a project-wide search before deleting.
-- [ ] Scripts: `"start": "vite"`, `"build": "vite build"`, `"test": "vitest run"`. `SpaProxyLaunchCommand` stays `npm start`.
-- [ ] Update CLAUDE.md and AGENTS.md: the Tech Stack and Build & Run sections say "Jest tests" and describe CRA.
-- [ ] Verify locally:
+- [x] Lint: replace `eslint-config-react-app` / eslint 7 / `eslint-plugin-flowtype` with eslint 9 flat config based on 3H.Admin's `eslint.config.mjs`, or drop the `lint` script. Either is fine; record which in the PR.
+  - 2026-10-22: kept lint on eslint 9 flat config (`eslint.config.mjs`). Existing `class=` attributes in `Games.jsx` surface as `react/no-unknown-property` warnings, left unfixed (out of scope).
+- [x] Remove unused dependencies: `oidc-client`, `jquery`, `merge`, `rimraf`, `web-vitals`, `nan`, `ajv`, `typescript`, `cross-env`, `@babel/plugin-proposal-private-property-in-object`, and the `overrides` block. None appear in the live bundle; confirm with a project-wide search before deleting.
+- [x] Scripts: `"start": "vite"`, `"build": "vite build"`, `"test": "vitest run"`. `SpaProxyLaunchCommand` stays `npm start`.
+- [x] Update CLAUDE.md and AGENTS.md: the Tech Stack and Build & Run sections say "Jest tests" and describe CRA.
+- [x] Verify locally:
   - `npm run build` produces `build/index.html` and `build/assets/*`, with no `.map` files.
   - `npm test` passes.
   - `dotnet run --project NLEastChallenge` opens the app through the SPA proxy on 44403, and Home, Games (including the refresh icon) and Upcoming all render with live data.
@@ -83,6 +84,7 @@ This is the root-cause fix and should clear most of the 86 alerts. Scope is the 
 - [ ] Deploy to `NLEastChallengeBeta` and check the same three pages, plus that `/static/js/*.js.map` and `/assets/*.map` no longer download. Then deploy to production.
 - [ ] After merge, re-count open Dependabot alerts and record the number here:
   `MSYS_NO_PATHCONV=1 gh api "repos/khaney64/NLEastChallenge/dependabot/alerts?state=open&per_page=100" --paginate --jq length`.
+- [ ] After merge, confirm alerts **#239** (CVE-2026-111755, GHSA-8r9p-f939-6h3c) and **#240** (CVE-2026-111756, GHSA-q3jh-wrc6-jgq8) show as fixed. Both are high-severity `follow-redirects` 1.16.0 credential-header leaks, fixed in 1.16.1. Added 2026-10-22. `follow-redirects` came in only through the CRA dev server's proxy chain (`http-proxy`); the `vite-migration` lockfile no longer contains it (`npm ls follow-redirects` is empty), so the migration closes both. If they stay open, add `"follow-redirects": ">=1.16.1"` to `overrides` (item 3).
 
 ### 2. Stop publishing the JavaScript source map: `todo`
 

@@ -34,7 +34,7 @@ const horseshoesDivisionData = {
 };
 
 beforeEach(() => {
-  global.fetch = jest.fn((url) => {
+  global.fetch = vi.fn((url) => {
     const path = url.toString();
     const data = path.startsWith('divisiondata?mode=hh')
       ? horseshoesDivisionData
@@ -109,7 +109,7 @@ it('ignores stale standings responses after scoring mode changes', async () => {
   const div = document.createElement('div');
   let resolveNormal;
 
-  global.fetch = jest.fn((url) => {
+  global.fetch = vi.fn((url) => {
     const path = url.toString();
     if (path.startsWith('divisiondata?mode=normal')) {
       return new Promise(resolve => {

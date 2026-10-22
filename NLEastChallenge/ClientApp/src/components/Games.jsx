@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import refreshIcon from '../images/refresh2.png';
 
 export class Games extends Component {
     static displayName = Games.name;
@@ -51,7 +52,7 @@ export class Games extends Component {
                         <th>Game</th>
                         <th>Status</th>
                         <th>Score &nbsp;
-                            <img src={require('../images/refresh2.png')} alt="refresh" style={{ height: '20px', width: '20px', borderWidth: '0' }} onClick={() => { comp.populateGameData(); }} />
+                            <img src={refreshIcon} alt="refresh" style={{ height: '20px', width: '20px', borderWidth: '0' }} onClick={() => { comp.populateGameData(); }} />
                         </th>
                     </tr>
                 </thead>

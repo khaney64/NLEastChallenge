@@ -9,10 +9,10 @@ NL East Challenge is a prediction game where participants guess NL East team win
 ## Tech Stack
 
 - **Backend**: ASP.NET Core 8.0 (C#, nullable reference types enabled)
-- **Frontend**: React 17 with React Router 5, Bootstrap 5, Reactstrap
+- **Frontend**: React 17 with React Router 5, Bootstrap 5, Reactstrap, built with Vite 8 (Node >= 24)
 - **HTTP Client**: Flurl.Http 4.0 (for MLB API calls)
 - **Caching**: Microsoft.Extensions.Caching.Memory
-- **Tests**: NUnit 4.3 with MSTest SDK
+- **Tests**: NUnit 4.3 with MSTest SDK (backend); Vitest with jsdom (frontend)
 
 ## Build & Run Commands
 
@@ -23,12 +23,13 @@ dotnet run --project NLEastChallenge  # Starts ASP.NET Core server
 dotnet test                     # Run NUnit tests in NLEastTests/
 
 # Frontend (from NLEastChallenge/ClientApp/)
-npm start                       # React dev server (proxied via SPA proxy at https://localhost:44403)
+npm start                       # Vite dev server on https://localhost:44403 (launched by the SPA proxy on dotnet run)
 npm run build                   # Production build
-npm test                        # Jest tests
+npm test                        # Vitest tests
+npm run lint                    # ESLint 9 (flat config in eslint.config.mjs)
 ```
 
-The .csproj auto-runs `npm install` and `npm run build` on publish.
+The .csproj auto-runs `npm install` and `npm run build` on publish and copies `ClientApp/build/**` into `wwwroot`. `vite.config.mjs` holds the dev server (HTTPS using the ASP.NET dev cert exported by `aspnetcore-https.js`), the `/divisiondata` and `/gamedata` proxy to the backend, the build settings (no source maps), and the Vitest config.
 
 ## Architecture
 
