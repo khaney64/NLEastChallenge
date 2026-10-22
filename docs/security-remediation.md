@@ -103,7 +103,7 @@ This is the root-cause fix and should clear most of the 86 alerts. Scope is the 
 
 Covered by `build.sourcemap: false` in item 1. Since the 2026-10-22 deploy, `/static/js/main.51a12831.js.map` and `/assets/*.map` return 404 on production.
 
-### 3. Clear remaining Dependabot alerts: `in progress`, waiting for Dependabot to auto-close
+### 3. Clear remaining Dependabot alerts: `done`
 
 Triage whatever is left after the migration. Bump direct dependencies, use npm `overrides` for transitives, and dismiss with a written reason anything dev-only that has no fix.
 
@@ -116,13 +116,15 @@ Triage whatever is left after the migration. Bump direct dependencies, use npm `
 | #217 | `baseline-browser-mapping` | 2.11.30 (fix is 2.11.0), via `eslint-plugin-react-hooks` |
 | #216, #218, #219, #222, #223, #225 | `colord`, `svgo` ×2, `fast-uri`, `postcss-selector-parser`, `compression` | not installed (CRA only) |
 
-Next: if they are still open after Dependabot's next pass, dismiss each as "Inaccurate" with the reason from the table. Not dismissed yet, by choice.
+2026-10-22: after Dependabot was restarted, all 10 closed as fixed with none dismissed. **Open alerts: 0** (199 fixed in total). No code change or override was needed.
 
 ### 4. Upgrade React 17 → 18/19 and react-router 5 → 7: `todo`, after 1
 
 React 17 and react-router 5 are out of active support. Reactstrap 8 also needs a major bump (9.x) to work with React 18 and Bootstrap 5.
 
-### 5. .NET maintenance: `in progress` (branch `dotnet10`; production deploy remaining)
+### 5. .NET maintenance: `done`
+
+Merged in PR #5 (`9289d98`) and deployed to production on 2026-10-22, with the runtime switched to `DOTNETCORE|10.0`.
 
 - [x] .NET 8 LTS support ends 2026-11-10. Retarget to `net10.0` (both `NLEastChallenge` and `NLEastTests`).
 - [x] Remove `Microsoft.AspNetCore.Http.Features` 5.0.17. It is an out-of-support 5.0-era package; the types come from the shared framework on net8+.
@@ -135,11 +137,13 @@ React 17 and react-router 5 are out of active support. Reactstrap 8 also needs a
   - `dotnet list package --vulnerable --include-transitive --source https://api.nuget.org/v3/index.json`: none.
   - `dotnet run`: the SPA proxy serves on 44403, and `/divisiondata` (both modes) and `/gamedata/*` return 200.
   - `dotnet publish -r linux-x64`: runtimeconfig targets `net10.0`.
-- [ ] Deploy. Switch the App Service runtime to .NET 10 **in the same step as the deploy**. Each Linux runtime image ships only its own .NET version: the net10 build won't start on `DOTNETCORE|8.0`, and the running net8 build won't start on `DOTNETCORE|10.0`. Change both together:
+- [x] Deploy. Switch the App Service runtime to .NET 10 **in the same step as the deploy**. Each Linux runtime image ships only its own .NET version: the net10 build won't start on `DOTNETCORE|8.0`, and the running net8 build won't start on `DOTNETCORE|10.0`. Change both together:
   ```
   az webapp config set -g NLEastRG -n NLEastChallenge --subscription 3d6572f6-2e54-4530-a484-2847d25e01fa --linux-fx-version "DOTNETCORE|10.0"
   ```
-  then `az webapp deploy … --clean true` as in item 1. Rollback: set `DOTNETCORE|8.0` and redeploy `main` from before this change.
+  then `az webapp deploy … --clean true` as in item 1. Rollback: set `DOTNETCORE|8.0` and redeploy `main` from before this change (`7e29c7f`).
+  - **Windows gotcha:** `az.cmd` passes its arguments through `cmd.exe`, which treats the `|` in `DOTNETCORE|10.0` as a pipe. The command fails with `'10.0' is not recognized`, and the runtime is left unchanged. Call the CLI's bundled Python directly instead: `& "C:\Program Files\Microsoft SDKs\Azure\CLI2\python.exe" -IBm azure.cli webapp config set … --linux-fx-version "DOTNETCORE|10.0"`.
+  - 2026-10-22: built and zipped first, then switched the runtime and deployed in one script that stops if the switch fails. Afterwards the site was served by Kestrel on .NET 10: standings (both modes) render with live data, Games Today and Upcoming render, the refresh icon loads, and the console is clean. `/divisiondata` and `/gamedata/*` return 200, and the old and new `.map` URLs return 404.
 
 ### 6. Verify App Service configuration: `todo`
 
@@ -151,7 +155,7 @@ Log in to the subscription that hosts `nleastchallenge` (`az login --tenant 5511
 - `ftpsState` is `Disabled` or `FtpsOnly`
 - no unexpected app settings or secrets
 
-Seen 2026-10-22 while deploying: runtime is `DOTNETCORE|8.0`, and both SCM and FTP basic-auth publishing credentials are allowed. SCM basic auth is what the Visual Studio profile uses, but `az webapp deploy` doesn't need it. If nothing else needs them, consider disabling both.
+Seen 2026-10-22 while deploying: runtime was `DOTNETCORE|8.0` (now `DOTNETCORE|10.0`, matching item 5), and both SCM and FTP basic-auth publishing credentials are allowed. SCM basic auth is what the Visual Studio profile uses, but `az webapp deploy` doesn't need it. If nothing else needs them, consider disabling both.
 
 ### 7. Developer machine Node.js: `done`
 
