@@ -25,7 +25,9 @@ Not verified: the App Service configuration (runtime stack, HTTPS-only, minimum 
 
 Status values: `todo`, `in progress`, `done`, `wontfix`.
 
-### 1. Migrate ClientApp from Create React App to Vite: `in progress` (branch `vite-migration`; deploy and alert recount remaining)
+### 1. Migrate ClientApp from Create React App to Vite: `done`
+
+Merged in PR #3 and deployed to production on 2026-10-22. Two follow-ups remain open: the alert recount and confirming #239/#240. Both wait on Dependabot rescanning the new lockfile.
 
 This is the root-cause fix and should clear most of the 86 alerts. Scope is the build toolchain only: keep React 17, react-router 5 and reactstrap 8 as they are (upgrades are item 4).
 
@@ -44,7 +46,15 @@ This is the root-cause fix and should clear most of the 86 alerts. Scope is the 
   - The CRA dev server then serves HTTPS on 44403 (`.env.development`: `PORT=44403`, `HTTPS=true`).
   - `src/setupProxy.js` forwards `/divisiondata` and `/gamedata` to the backend.
 - **How production works:** `PublishRunWebpack` in the csproj runs `npm install` and `npm run build`, then copies `ClientApp/build/**` into `wwwroot`. `Program.cs` serves it with `UseStaticFiles` and `MapFallbackToFile("index.html")`.
-- **Deploy targets:** Visual Studio Zip Deploy profiles in `NLEastChallenge/Properties/PublishProfiles/`. **Deploy to `NLEastChallengeBeta` (`https://nleastchallengebeta.azurewebsites.net`) first**, then production. Both are in resource group `NLEastRG`, in a subscription that is not the default `az` login.
+- **Deploy target:** there is a single site, production App Service `NLEastChallenge` (Linux, `DOTNETCORE|8.0`), in resource group `NLEastRG`. Its subscription is `3d6572f6-2e54-4530-a484-2847d25e01fa` in tenant `55117e3a-e992-480d-8f42-095cd729530a`, not the default `az` login. There is no beta or staging site.
+- **How to deploy:** the Visual Studio Zip Deploy profile (`NLEastChallenge/Properties/PublishProfiles/`) loses its saved password and then fails with "The ZipDeploy task was not given a value for the required parameter DestinationUsername". The Azure CLI uses your `az` login instead:
+  ```
+  az login --tenant 55117e3a-e992-480d-8f42-095cd729530a
+  dotnet publish NLEastChallenge -c Release -r linux-x64 --self-contained false -o <out>
+  # zip the contents of <out> (not the folder itself)
+  az webapp deploy -g NLEastRG -n NLEastChallenge --subscription 3d6572f6-2e54-4530-a484-2847d25e01fa --type zip --clean true --src-path <zip>
+  ```
+  Keep `--clean true`. Without it, files from the previous build stay in `wwwroot`. The first 2026-10-22 deploy left the old CRA source map and `service-worker.js` downloadable.
 
 #### Checklist
 
@@ -81,16 +91,18 @@ This is the root-cause fix and should clear most of the 86 alerts. Scope is the 
   - `npm test` passes.
   - `dotnet run --project NLEastChallenge` opens the app through the SPA proxy on 44403, and Home, Games (including the refresh icon) and Upcoming all render with live data.
   - `dotnet publish` output has `wwwroot/index.html`.
-- [ ] Deploy to `NLEastChallengeBeta` and check the same three pages, plus that `/static/js/*.js.map` and `/assets/*.map` no longer download. Then deploy to production.
+- [x] Deploy to production and check the same three pages, plus that `/static/js/*.js.map` and `/assets/*.map` no longer download.
+  - 2026-10-22: deployed with `az webapp deploy --clean true`. Standings render with live data, Games Today and Upcoming render (empty in the offseason), the refresh icon loads, and the console is clean. The old and new `.map` URLs and `/service-worker.js` return 404.
 - [ ] After merge, re-count open Dependabot alerts and record the number here:
   `MSYS_NO_PATHCONV=1 gh api "repos/khaney64/NLEastChallenge/dependabot/alerts?state=open&per_page=100" --paginate --jq length`.
+  - 2026-10-22, after deploy: still 86, but every alert was last updated 2026-10-21. Dependabot had not rescanned the merged lockfile yet, and `npm audit` on it reports 0 vulnerabilities. Recount later.
 - [ ] After merge, confirm alerts **#239** (CVE-2026-111755, GHSA-8r9p-f939-6h3c) and **#240** (CVE-2026-111756, GHSA-q3jh-wrc6-jgq8) show as fixed. Both are high-severity `follow-redirects` 1.16.0 credential-header leaks, fixed in 1.16.1. Added 2026-10-22. `follow-redirects` came in only through the CRA dev server's proxy chain (`http-proxy`); the `vite-migration` lockfile no longer contains it (`npm ls follow-redirects` is empty), so the migration closes both. If they stay open, add `"follow-redirects": ">=1.16.1"` to `overrides` (item 3).
 
-### 2. Stop publishing the JavaScript source map: `todo`
+### 2. Stop publishing the JavaScript source map: `done`
 
-Covered by `build.sourcemap: false` in item 1. If item 1 slips, set `GENERATE_SOURCEMAP=false` for the CRA build and redeploy.
+Covered by `build.sourcemap: false` in item 1. Since the 2026-10-22 deploy, `/static/js/main.51a12831.js.map` and `/assets/*.map` return 404 on production.
 
-### 3. Clear remaining Dependabot alerts: `todo`, blocked by 1
+### 3. Clear remaining Dependabot alerts: `todo`, start once Dependabot has rescanned after item 1
 
 Triage whatever is left after the migration. Bump direct dependencies, use npm `overrides` for transitives, and dismiss with a written reason anything dev-only that has no fix.
 
@@ -106,7 +118,9 @@ React 17 and react-router 5 are out of active support. Reactstrap 8 also needs a
 
 ### 6. Verify App Service configuration: `todo`
 
-Log in to the subscription that hosts `nleastchallenge` and confirm:
+Log in to the subscription that hosts `nleastchallenge` (`az login --tenant 55117e3a-e992-480d-8f42-095cd729530a`; see item 1) and confirm:
+
+Seen 2026-10-22 while deploying: runtime is `DOTNETCORE|8.0`, and both SCM and FTP basic-auth publishing credentials are allowed. SCM basic auth is what the Visual Studio profile uses, but `az webapp deploy` doesn't need it. If nothing else needs them, consider disabling both.
 
 - runtime stack matches the target framework after item 5
 - `httpsOnly: true`
