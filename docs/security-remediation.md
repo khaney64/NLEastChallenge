@@ -84,6 +84,7 @@ This is the root-cause fix and should clear most of the 86 alerts. Scope is the 
 - [ ] Deploy to `NLEastChallengeBeta` and check the same three pages, plus that `/static/js/*.js.map` and `/assets/*.map` no longer download. Then deploy to production.
 - [ ] After merge, re-count open Dependabot alerts and record the number here:
   `MSYS_NO_PATHCONV=1 gh api "repos/khaney64/NLEastChallenge/dependabot/alerts?state=open&per_page=100" --paginate --jq length`.
+- [ ] After merge, confirm alerts **#239** (CVE-2026-111755, GHSA-8r9p-f939-6h3c) and **#240** (CVE-2026-111756, GHSA-q3jh-wrc6-jgq8) show as fixed. Both are high-severity `follow-redirects` 1.16.0 credential-header leaks, fixed in 1.16.1. Added 2026-10-22. `follow-redirects` came in only through the CRA dev server's proxy chain (`http-proxy`); the `vite-migration` lockfile no longer contains it (`npm ls follow-redirects` is empty), so the migration closes both. If they stay open, add `"follow-redirects": ">=1.16.1"` to `overrides` (item 3).
 
 ### 2. Stop publishing the JavaScript source map: `todo`
 
