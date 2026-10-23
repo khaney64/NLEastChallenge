@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Route, Redirect } from 'react-router';
+import { Navigate, Route, Routes } from 'react-router';
 import { Home } from './components/Home';
 import { Layout } from './components/Layout';
 
@@ -11,8 +11,10 @@ export default class App extends Component {
   render () {
     return (
       <Layout>
-      <Route exact path='/index.html'><Redirect to='/' /></Route>
-      <Route exact path='/' component={Home} />
+        <Routes>
+          <Route path='/index.html' element={<Navigate to='/' replace />} />
+          <Route path='/' element={<Home />} />
+        </Routes>
       </Layout>
     );
   }

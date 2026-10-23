@@ -1,5 +1,5 @@
-import React, { Component, useState } from 'react';
-import { Tooltip } from 'reactstrap';
+import React, { Component, useEffect, useRef } from 'react';
+import Tooltip from 'bootstrap/js/dist/tooltip';
 import horseshoeIcon from '../images/horseshoe.png';
 
 export class Standings extends Component {
@@ -159,10 +159,18 @@ function ScoringDetails({ mode }) {
 }
 
 function TooltipCell({ column, rowIndex, colIndex, mode }) {
-    const [tooltipOpen, setTooltipOpen] = useState(false);
-    const toggle = () => setTooltipOpen(!tooltipOpen);
+    const cellRef = useRef(null);
     const cellId = `cell-${rowIndex}-${colIndex}`;
     const hasTooltip = column.winsGuess > 0;
+    const tooltipText = hasTooltip ? `${column.winsGuess} wins` : null;
+
+    useEffect(() => {
+        if (!tooltipText) {
+            return undefined;
+        }
+        const tooltip = new Tooltip(cellRef.current, { title: tooltipText, placement: 'top', trigger: 'hover focus click' });
+        return () => tooltip.dispose();
+    }, [tooltipText]);
     const isStreak = column.team === 'Streak';
     const isRecord = column.team === 'Record';
     const isActualTeam = colIndex === 0 && column.record;
@@ -176,21 +184,11 @@ function TooltipCell({ column, rowIndex, colIndex, mode }) {
     return (
         <td
             id={cellId}
+            ref={cellRef}
             className={cls}
         >
             {GetColumnValue(column)}
             {isActualTeam && <span className="mobile-record">{column.record}</span>}
-            {hasTooltip &&
-                <Tooltip
-                    placement="top"
-                    isOpen={tooltipOpen}
-                    target={cellId}
-                    toggle={toggle}
-                    trigger="hover focus click"
-                >
-                    {column.winsGuess} wins
-                </Tooltip>
-            }
         </td>
     );
 }

@@ -1,7 +1,6 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import { act, Simulate } from 'react-dom/test-utils';
-import { MemoryRouter } from 'react-router-dom';
+import React, { act } from 'react';
+import { createRoot } from 'react-dom/client';
+import { MemoryRouter } from 'react-router';
 import App from './App';
 import Standings from './components/Standings';
 
@@ -52,18 +51,33 @@ afterEach(() => {
   delete global.fetch;
 });
 
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+
+const roots = new Map();
+
+const render = (element, div) => {
+  const root = createRoot(div);
+  roots.set(div, root);
+  root.render(element);
+};
+
+const unmount = (div) => {
+  act(() => roots.get(div).unmount());
+  roots.delete(div);
+};
+
 const flushPendingPromises = () => new Promise(resolve => setTimeout(resolve, 0));
 
 const renderStandings = async (div) => {
   await act(async () => {
-    ReactDOM.render(<Standings />, div);
+    render(<Standings />, div);
     await flushPendingPromises();
   });
 };
 
 const clickAndFlush = async (element) => {
   await act(async () => {
-    Simulate.click(element);
+    element.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await flushPendingPromises();
   });
 };
@@ -72,13 +86,13 @@ it('renders without crashing', async () => {
   const div = document.createElement('div');
 
   await act(async () => {
-    ReactDOM.render(
+    render(
       <MemoryRouter>
         <App />
       </MemoryRouter>, div);
   });
 
-  ReactDOM.unmountComponentAtNode(div);
+  unmount(div);
 });
 
 it('switches standings scoring mode', async () => {
@@ -102,7 +116,7 @@ it('switches standings scoring mode', async () => {
   expect(div.querySelector('button[aria-label="Normal scoring"]').getAttribute('aria-pressed')).toBe('false');
   expect(div.querySelector('button[aria-label="Horseshoes and hand grenades scoring"]').getAttribute('aria-pressed')).toBe('true');
 
-  ReactDOM.unmountComponentAtNode(div);
+  unmount(div);
 });
 
 it('ignores stale standings responses after scoring mode changes', async () => {
@@ -126,7 +140,7 @@ it('ignores stale standings responses after scoring mode changes', async () => {
 
   let standings;
   await act(async () => {
-    standings = ReactDOM.render(<Standings />, div);
+    render(<Standings ref={instance => { standings = instance; }} />, div);
   });
 
   await act(async () => {
@@ -143,7 +157,7 @@ it('ignores stale standings responses after scoring mode changes', async () => {
   expect(div.textContent).toContain('Bonus');
   expect(div.textContent).not.toContain('Greg');
 
-  ReactDOM.unmountComponentAtNode(div);
+  unmount(div);
 });
 
 it('shows current scoring explanation', async () => {
@@ -161,7 +175,7 @@ it('shows current scoring explanation', async () => {
   expect(scoringButton.getAttribute('title')).toBe('Hide scoring explanation');
   expect(div.textContent).toContain('Normal: exact rank matches');
 
-  ReactDOM.unmountComponentAtNode(div);
+  unmount(div);
 });
 
 it('keeps normal scoring highlight green', async () => {
@@ -171,7 +185,7 @@ it('keeps normal scoring highlight green', async () => {
 
   expect(div.querySelectorAll('.score-normal')).toHaveLength(1);
 
-  ReactDOM.unmountComponentAtNode(div);
+  unmount(div);
 });
 
 it('keeps scoring controls outside table footer', async () => {
@@ -183,7 +197,7 @@ it('keeps scoring controls outside table footer', async () => {
   expect(div.querySelector('.table-responsive > .scoring-controls')).not.toBeNull();
   expect(div.querySelectorAll('tfoot td')).toHaveLength(normalDivisionData.footers.length);
 
-  ReactDOM.unmountComponentAtNode(div);
+  unmount(div);
 });
 
 it('shows horseshoes score reason colors', async () => {
@@ -199,7 +213,7 @@ it('shows horseshoes score reason colors', async () => {
   expect(div.querySelectorAll('.score-pairwise')).toHaveLength(1);
   expect(div.querySelectorAll('.score-mixed')).toHaveLength(1);
 
-  ReactDOM.unmountComponentAtNode(div);
+  unmount(div);
 });
 
 it('explains horseshoes score colors', async () => {
@@ -208,15 +222,16 @@ it('explains horseshoes score colors', async () => {
   await renderStandings(div);
 
   const hhButton = div.querySelector('button[aria-label="Horseshoes and hand grenades scoring"]');
-  const scoringButton = div.querySelector('button[aria-label="Show scoring explanation"]');
 
   await clickAndFlush(hhButton);
 
+  // Changing mode reloads the table, so query the button that is rendered now.
+  const scoringButton = div.querySelector('button[aria-label="Show scoring explanation"]');
   await clickAndFlush(scoringButton);
 
   expect(div.textContent).toContain('green = close-enough rank points');
   expect(div.textContent).toContain('blue = order bonus only');
   expect(div.textContent).toContain('teal = both');
 
-  ReactDOM.unmountComponentAtNode(div);
+  unmount(div);
 });

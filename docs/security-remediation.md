@@ -118,9 +118,35 @@ Triage whatever is left after the migration. Bump direct dependencies, use npm `
 
 2026-10-22: after Dependabot was restarted, all 10 closed as fixed with none dismissed. **Open alerts: 0** (199 fixed in total). No code change or override was needed.
 
-### 4. Upgrade React 17 → 18/19 and react-router 5 → 7: `todo`, after 1
+### 4. Upgrade React 17 → 18/19 and react-router 5 → 7: `in progress` (branch `react19`; merge and deploy remaining)
 
 React 17 and react-router 5 are out of active support. Reactstrap 8 also needs a major bump (9.x) to work with React 18 and Bootstrap 5.
+
+2026-10-23: the target chosen was **React 19.3.1 + react-router 8.4** (`~8.4.0`, because 8.5.0 was only 4 days old), and reactstrap was dropped rather than upgraded. Reactstrap 9.2.3, the latest (2024), depends on `react-popper`, whose peer range stops at React 18, and its transitions rely on `findDOMNode`, which React 19 removed.
+
+- [x] Dependencies:
+  - `react` and `react-dom` 17 → `^19.3.1`
+  - `react-router-dom` 5 → `react-router` `~8.4.0` (v7+ ships everything from `react-router`)
+  - removed `reactstrap` and the unused `react-router-bootstrap`
+  - added `@popperjs/core` (Bootstrap Tooltip's peer; it was already installed, through reactstrap)
+- [x] `index.jsx`: `ReactDOM.render` → `createRoot`.
+- [x] `App.jsx`: `<Route exact component>` and `<Redirect>` → `<Routes>`, `<Route element>` and `<Navigate replace>` (`/index.html` still redirects to `/`).
+- [x] `Layout.jsx`: reactstrap `Container` → `<div className="container">`.
+- [x] `Standings.jsx`: the reactstrap `Tooltip` became Bootstrap's own `Tooltip` (`bootstrap/js/dist/tooltip`), created on the cell through a ref in `useEffect` and disposed on unmount. Same Bootstrap look, triggers `hover focus click`. Importing the single module instead of `bootstrap`'s entry point saves about 34 kB.
+- [x] Tests: `react-dom/test-utils` is gone in React 19.
+  - Moved to `createRoot`, plus `act` from `react`; clicks are now real DOM `click` events instead of `Simulate`.
+  - The `Standings` instance comes from a ref instead of the `ReactDOM.render` return value.
+  - `explains horseshoes score colors` now looks up the scoring button after the mode switch. The old button is unmounted by the reload, and only `Simulate` could still click a detached node.
+- [x] Verify (2026-10-23):
+  - `npm test`: 14/14 pass
+  - `npm run lint`: 0 errors, the same 9 existing `class=` warnings
+  - `npm audit`: 0 vulnerabilities
+  - `npm run build`: no `.map` files. JS is 314 kB (100 kB gzipped), up from 245 kB (77 kB) because of `react-dom` 19 and Popper.
+  - Published build run locally:
+    - `/index.html` redirects to `/`, and standings render in both modes. Games Today, Upcoming and the refresh icon render.
+    - The guess tooltip works on hover, on click or tap (a second tap closes it) at desktop and at 390px width, and after a mode switch.
+    - Console clean.
+- [ ] Merge and deploy (`.\deploy.ps1`). The runtime is unchanged, so this is a normal deploy.
 
 ### 5. .NET maintenance: `done`
 

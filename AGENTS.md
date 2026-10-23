@@ -9,7 +9,7 @@ NL East Challenge is a prediction game where participants guess NL East team win
 ## Tech Stack
 
 - **Backend**: ASP.NET Core 10.0 (C#, nullable reference types enabled)
-- **Frontend**: React 17 with React Router 5, Bootstrap 5, Reactstrap, built with Vite 8 (Node >= 24)
+- **Frontend**: React 19 with React Router 8, Bootstrap 5 (CSS plus its Tooltip JS), built with Vite 8 (Node >= 24)
 - **HTTP Client**: Flurl.Http 4.0 (for MLB API calls)
 - **Caching**: Microsoft.Extensions.Caching.Memory
 - **Tests**: NUnit 4.3 with MSTest SDK (backend); Vitest with jsdom (frontend)
