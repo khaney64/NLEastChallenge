@@ -47,7 +47,7 @@ This is the root-cause fix and should clear most of the 86 alerts. Scope is the 
   - `src/setupProxy.js` forwards `/divisiondata` and `/gamedata` to the backend.
 - **How production works:** `PublishRunWebpack` in the csproj runs `npm install` and `npm run build`, then copies `ClientApp/build/**` into `wwwroot`. `Program.cs` serves it with `UseStaticFiles` and `MapFallbackToFile("index.html")`.
 - **Deploy target:** there is a single site, production App Service `NLEastChallenge` (Linux; runtime stack must match the target framework, see item 5), in resource group `NLEastRG`. Its subscription is `3d6572f6-2e54-4530-a484-2847d25e01fa` in tenant `55117e3a-e992-480d-8f42-095cd729530a`, not the default `az` login. There is no beta or staging site.
-- **How to deploy:** the Visual Studio Zip Deploy profile (`NLEastChallenge/Properties/PublishProfiles/`) loses its saved password and then fails with "The ZipDeploy task was not given a value for the required parameter DestinationUsername". The Azure CLI uses your `az` login instead:
+- **How to deploy:** run `.\deploy.ps1` from an up-to-date `main` (`-PackageOnly` for a dry run). It publishes, zips, checks the `az` login and that the App Service runtime matches the target framework, then deploys with `--clean true`. Background: the Visual Studio Zip Deploy profile (`NLEastChallenge/Properties/PublishProfiles/`) loses its saved password and then fails with "The ZipDeploy task was not given a value for the required parameter DestinationUsername". The Azure CLI uses your `az` login instead:
   ```
   az login --tenant 55117e3a-e992-480d-8f42-095cd729530a
   dotnet publish NLEastChallenge -c Release -r linux-x64 --self-contained false -o <out>
