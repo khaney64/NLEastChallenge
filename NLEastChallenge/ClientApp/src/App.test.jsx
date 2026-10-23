@@ -11,7 +11,7 @@ const normalDivisionData = {
       { team: 'ATL', teamName: 'ATL', record: '20-9', value: 0 },
       { team: 'Record', record: '20-9', value: 0 },
       { team: 'Streak', streak: 'W1', value: 0 },
-      { team: 'PHI', teamName: 'PHI', winsGuess: 0, value: 5 }
+      { team: 'PHI', teamName: 'PHI', winsGuess: 92, value: 5 }
     ]
   ],
   footers: ['', '', '', '5']
@@ -49,6 +49,7 @@ beforeEach(() => {
 
 afterEach(() => {
   delete global.fetch;
+  document.body.innerHTML = '';
 });
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -72,6 +73,16 @@ const renderStandings = async (div) => {
   await act(async () => {
     render(<Standings />, div);
     await flushPendingPromises();
+  });
+};
+
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Bootstrap's hover trigger listens for mouseover/mouseout and checks relatedTarget.
+const hoverAndWait = async (element) => {
+  await act(async () => {
+    element.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, relatedTarget: document.body }));
+    await wait(20);
   });
 };
 
@@ -232,6 +243,87 @@ it('explains horseshoes score colors', async () => {
   expect(div.textContent).toContain('green = close-enough rank points');
   expect(div.textContent).toContain('blue = order bonus only');
   expect(div.textContent).toContain('teal = both');
+
+  unmount(div);
+});
+
+it('shows wins guess tooltip and removes it on mode change', async () => {
+  const div = document.createElement('div');
+  document.body.appendChild(div);
+
+  await renderStandings(div);
+
+  await hoverAndWait(div.querySelector('#cell-0-3'));
+
+  expect(document.querySelector('.tooltip-inner').textContent).toBe('92 wins');
+
+  await clickAndFlush(div.querySelector('button[aria-label="Horseshoes and hand grenades scoring"]'));
+
+  expect(document.querySelectorAll('.tooltip')).toHaveLength(0);
+
+  unmount(div);
+});
+
+it('removes wins guess tooltip on unmount', async () => {
+  const div = document.createElement('div');
+  document.body.appendChild(div);
+
+  await renderStandings(div);
+
+  await hoverAndWait(div.querySelector('#cell-0-3'));
+
+  expect(document.querySelectorAll('.tooltip')).toHaveLength(1);
+
+  unmount(div);
+
+  expect(document.querySelectorAll('.tooltip')).toHaveLength(0);
+});
+
+it('disposes wins guess tooltip during its fade-out without errors', async () => {
+  const div = document.createElement('div');
+  document.body.appendChild(div);
+
+  // jsdom reports exceptions thrown inside event listeners as window error events.
+  const errors = [];
+  const onError = (event) => {
+    errors.push(event.error);
+    event.preventDefault();
+  };
+  window.addEventListener('error', onError);
+
+  await renderStandings(div);
+
+  // jsdom has no CSS transitions, so Bootstrap completes show/hide from a duration + 5 ms fallback timer.
+  vi.useFakeTimers();
+  try {
+    const cell = div.querySelector('#cell-0-3');
+
+    cell.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, relatedTarget: document.body }));
+    vi.advanceTimersByTime(10);
+    expect(document.querySelector('.tooltip.show')).not.toBeNull();
+
+    // Start the hide, but stop before its fallback timer runs the completion callback.
+    cell.dispatchEvent(new MouseEvent('mouseout', { bubbles: true, relatedTarget: document.body }));
+    vi.advanceTimersByTime(1);
+    expect(document.querySelector('.tooltip')).not.toBeNull();
+    expect(document.querySelector('.tooltip.show')).toBeNull();
+
+    // Changing mode unmounts the table while the hide is still in flight.
+    act(() => {
+      div.querySelector('button[aria-label="Horseshoes and hand grenades scoring"]')
+        .dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    // The fallback timer fires on the removed tip; the async advance also lets the Horseshoes fetch settle inside act.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(50);
+    });
+    expect(errors).toEqual([]);
+    expect(document.querySelectorAll('.tooltip')).toHaveLength(0);
+  } finally {
+    vi.useRealTimers();
+    window.removeEventListener('error', onError);
+  }
 
   unmount(div);
 });

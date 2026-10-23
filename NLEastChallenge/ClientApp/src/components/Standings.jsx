@@ -169,7 +169,14 @@ function TooltipCell({ column, rowIndex, colIndex, mode }) {
             return undefined;
         }
         const tooltip = new Tooltip(cellRef.current, { title: tooltipText, placement: 'top', trigger: 'hover focus click' });
-        return () => tooltip.dispose();
+        return () => {
+            // A tip without 'show' is mid fade-out; Bootstrap would run that hide's completion on the
+            // disposed instance and throw, so finish the hide now (its transitionend handler) before disposing.
+            if (tooltip.tip && !tooltip.tip.classList.contains('show')) {
+                tooltip.tip.dispatchEvent(new Event('transitionend'));
+            }
+            tooltip.dispose();
+        };
     }, [tooltipText]);
     const isStreak = column.team === 'Streak';
     const isRecord = column.team === 'Record';
