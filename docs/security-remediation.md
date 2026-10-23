@@ -47,7 +47,7 @@ This is the root-cause fix and should clear most of the 86 alerts. Scope is the 
   - `src/setupProxy.js` forwards `/divisiondata` and `/gamedata` to the backend.
 - **How production works:** `PublishRunWebpack` in the csproj runs `npm install` and `npm run build`, then copies `ClientApp/build/**` into `wwwroot`. `Program.cs` serves it with `UseStaticFiles` and `MapFallbackToFile("index.html")`.
 - **Deploy target:** there is a single site, production App Service `NLEastChallenge` (Linux; runtime stack must match the target framework, see item 5), in resource group `NLEastRG`. Its subscription is `3d6572f6-2e54-4530-a484-2847d25e01fa` in tenant `55117e3a-e992-480d-8f42-095cd729530a`, not the default `az` login. There is no beta or staging site.
-- **How to deploy:** the Visual Studio Zip Deploy profile (`NLEastChallenge/Properties/PublishProfiles/`) loses its saved password and then fails with "The ZipDeploy task was not given a value for the required parameter DestinationUsername". The Azure CLI uses your `az` login instead:
+- **How to deploy:** run `.\deploy.ps1` from an up-to-date `main` (`-PackageOnly` for a dry run). It publishes, zips, checks the `az` login and that the App Service runtime matches the target framework, then deploys with `--clean true`. Background: the Visual Studio Zip Deploy profile (`NLEastChallenge/Properties/PublishProfiles/`) loses its saved password and then fails with "The ZipDeploy task was not given a value for the required parameter DestinationUsername". The Azure CLI uses your `az` login instead:
   ```
   az login --tenant 55117e3a-e992-480d-8f42-095cd729530a
   dotnet publish NLEastChallenge -c Release -r linux-x64 --self-contained false -o <out>
@@ -145,17 +145,33 @@ Merged in PR #5 (`9289d98`) and deployed to production on 2026-10-22, with the r
   - **Windows gotcha:** `az.cmd` passes its arguments through `cmd.exe`, which treats the `|` in `DOTNETCORE|10.0` as a pipe. The command fails with `'10.0' is not recognized`, and the runtime is left unchanged. Call the CLI's bundled Python directly instead: `& "C:\Program Files\Microsoft SDKs\Azure\CLI2\python.exe" -IBm azure.cli webapp config set … --linux-fx-version "DOTNETCORE|10.0"`.
   - 2026-10-22: built and zipped first, then switched the runtime and deployed in one script that stops if the switch fails. Afterwards the site was served by Kestrel on .NET 10: standings (both modes) render with live data, Games Today and Upcoming render, the refresh icon loads, and the console is clean. `/divisiondata` and `/gamedata/*` return 200, and the old and new `.map` URLs return 404.
 
-### 6. Verify App Service configuration: `todo`
+### 6. Verify App Service configuration: `done`
 
 Log in to the subscription that hosts `nleastchallenge` (`az login --tenant 55117e3a-e992-480d-8f42-095cd729530a`; see item 1) and confirm:
 
-- runtime stack matches the target framework after item 5
-- `httpsOnly: true`
-- `minTlsVersion` is 1.2 or higher
-- `ftpsState` is `Disabled` or `FtpsOnly`
-- no unexpected app settings or secrets
+- [x] runtime stack matches the target framework after item 5: `DOTNETCORE|10.0`
+- [x] `httpsOnly: true`. `http://` returns a 301 redirect to `https://`.
+- [x] `minTlsVersion` is 1.2 or higher: 1.2
+- [x] `ftpsState` is `Disabled` or `FtpsOnly`: was `FtpsOnly`, now `Disabled`
+- [x] no unexpected app settings or secrets. The only app settings are `ASPNETCORE_ENVIRONMENT` and `WEBSITE_HTTPLOGGING_RETENTION_DAYS`, and there are no connection strings. **However, `ASPNETCORE_ENVIRONMENT` was `Development`** (see below).
 
-Seen 2026-10-22 while deploying: runtime was `DOTNETCORE|8.0` (now `DOTNETCORE|10.0`, matching item 5), and both SCM and FTP basic-auth publishing credentials are allowed. SCM basic auth is what the Visual Studio profile uses, but `az webapp deploy` doesn't need it. If nothing else needs them, consider disabling both.
+Audit 2026-10-23. The app has custom domain `nleast-challenge.com` (SNI binding, Azure-managed GeoTrust certificate expiring 2027-01-18) as well as `nleastchallenge.azurewebsites.net`. No deployment slots. Remote debugging off, client certificates off, CORS empty. IP restrictions are the default allow-all, as expected for a public site. The B1 plan hosts only this app.
+
+Changes applied 2026-10-23:
+
+| Setting | Before | After | Why |
+|---|---|---|---|
+| `ASPNETCORE_ENVIRONMENT` | `Development` | `Production` | Development enabled the developer exception page, which shows stack traces to visitors on unhandled errors. It also suppressed HSTS, because `Program.cs` only calls `UseHsts()` outside Development. Both hostnames now send `Strict-Transport-Security: max-age=2592000`. |
+| `scmMinTlsVersion` (deployment endpoint `*.scm.azurewebsites.net`) | 1.0 | 1.2 | Matches the site's minimum. |
+| SCM basic-auth publishing credentials | allowed | disabled | `az webapp deploy` uses the `az` login. This removes the `$NLEastChallenge` deployment password (it was exposed in a 2026-10-22 terminal session). The Visual Studio password-based Zip Deploy profile no longer works; deploy as in item 1. |
+| FTP basic-auth publishing credentials, `ftpsState` | allowed, `FtpsOnly` | disabled, `Disabled` | Not used. |
+| RapidSSL certificate for `nleast-challenge.com` and `www.nleast-challenge.com` | uploaded, unbound | deleted | Expired 2026-10-09 and replaced by the managed certificate. `www.nleast-challenge.com` has no DNS record. |
+
+Left as is: the system-assigned managed identity has no role assignments, so it is harmless.
+
+After the changes, both hostnames serve the app: standings with live data, Games Today and Upcoming render, the console is clean, and the API endpoints return 200. Settings were re-read from Azure to confirm. If the Visual Studio profile is ever needed again, re-enable SCM basic auth under Configuration → General settings.
+
+Windows note: the same `az.cmd` quoting problem as in item 5 applies. `--generic-configurations '{"scmMinTlsVersion":"1.2"}'` failed through PowerShell. `az resource update -n web --resource-type config --parent sites/NLEastChallenge --namespace Microsoft.Web --set properties.scmMinTlsVersion=1.2`, run through the CLI's bundled Python, worked.
 
 ### 7. Developer machine Node.js: `done`
 

@@ -29,6 +29,8 @@ npm test                        # Vitest tests
 npm run lint                    # ESLint 9 (flat config in eslint.config.mjs)
 ```
 
+Deploy to production (the only site) with `.\deploy.ps1` from the repo root; it needs `az login --tenant 55117e3a-e992-480d-8f42-095cd729530a` first and refuses to deploy if the App Service runtime does not match the target framework. `-PackageOnly` builds the zip without deploying.
+
 The .csproj auto-runs `npm install` and `npm run build` on publish and copies `ClientApp/build/**` into `wwwroot`. `vite.config.mjs` holds the dev server (HTTPS using the ASP.NET dev cert exported by `aspnetcore-https.js`), the `/divisiondata` and `/gamedata` proxy to the backend, the build settings (no source maps), and the Vitest config.
 
 ## Architecture
