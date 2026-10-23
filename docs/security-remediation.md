@@ -118,7 +118,9 @@ Triage whatever is left after the migration. Bump direct dependencies, use npm `
 
 2026-10-22: after Dependabot was restarted, all 10 closed as fixed with none dismissed. **Open alerts: 0** (199 fixed in total). No code change or override was needed.
 
-### 4. Upgrade React 17 → 18/19 and react-router 5 → 7: `in progress` (branch `react19`; merge and deploy remaining)
+### 4. Upgrade React 17 → 18/19 and react-router 5 → 7: `done` (went to React 19 and react-router 8)
+
+Merged in PR #8 (`62d179a`) and deployed to production on 2026-10-23.
 
 React 17 and react-router 5 are out of active support. Reactstrap 8 also needs a major bump (9.x) to work with React 18 and Bootstrap 5.
 
@@ -146,7 +148,17 @@ React 17 and react-router 5 are out of active support. Reactstrap 8 also needs a
     - `/index.html` redirects to `/`, and standings render in both modes. Games Today, Upcoming and the refresh icon render.
     - The guess tooltip works on hover, on click or tap (a second tap closes it) at desktop and at 390px width, and after a mode switch.
     - Console clean.
-- [ ] Merge and deploy (`.\deploy.ps1`). The runtime is unchanged, so this is a normal deploy.
+- [x] Review: `/review-pr --auto` ran three rounds on PR #8.
+  - Round 1 found that disposing a tooltip mid-fade threw a `TypeError`, and that no test built a tooltip.
+  - Round 2 found the same throw when a re-show replaced the fading tip, and a stale test count.
+  - All were fixed (`354ac40`, `a930fd1`), each with a regression test that failed before its fix. Round 3 was clean.
+  - The cleanup now records every tip that starts hiding (`hide.bs.tooltip`) and finishes each pending hide before `dispose()`, so the fade is kept.
+- [x] Merge and deploy (`.\deploy.ps1`, its first real run). 2026-10-23 production check on `nleast-challenge.com`:
+  - The new bundle is served (React 19.3.1, no reactstrap), and `/index.html` redirects to `/`.
+  - Standings render in both modes. Games Today, Upcoming and the refresh icon render, and the scoring explanation works.
+  - The guess tooltip works on hover (6/6 immediate hovers) and on tap at 390px, and no tooltip is left behind after a mode switch.
+  - The console is clean, `.map` URLs return 404, and HSTS is sent.
+  - One bare `/divisiondata` request and the first tooltip check failed in the first seconds after the restart (500, no tooltip). Everything passed on repeat.
 
 ### 5. .NET maintenance: `done`
 
