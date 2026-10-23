@@ -323,7 +323,57 @@ it('disposes wins guess tooltip during its fade-out without errors', async () =>
   } finally {
     vi.useRealTimers();
     window.removeEventListener('error', onError);
+    unmount(div);
   }
+});
 
-  unmount(div);
+it('disposes wins guess tooltip after a re-show replaced its fading tip without errors', async () => {
+  const div = document.createElement('div');
+  document.body.appendChild(div);
+
+  const errors = [];
+  const onError = (event) => {
+    errors.push(event.error);
+    event.preventDefault();
+  };
+  window.addEventListener('error', onError);
+
+  await renderStandings(div);
+
+  vi.useFakeTimers();
+  try {
+    const cell = div.querySelector('#cell-0-3');
+
+    cell.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, relatedTarget: document.body }));
+    vi.advanceTimersByTime(10);
+    const firstTip = document.querySelector('.tooltip.show');
+    expect(firstTip).not.toBeNull();
+
+    // Start the hide of the first tip, then hover again before its fallback timer completes it.
+    cell.dispatchEvent(new MouseEvent('mouseout', { bubbles: true, relatedTarget: document.body }));
+    vi.advanceTimersByTime(1);
+    expect(firstTip.classList.contains('show')).toBe(false);
+
+    // The re-show removes the fading tip and creates a new one; the first tip's hide is still pending.
+    cell.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, relatedTarget: document.body }));
+    vi.advanceTimersByTime(1);
+    const secondTip = document.querySelector('.tooltip.show');
+    expect(secondTip).not.toBeNull();
+    expect(secondTip).not.toBe(firstTip);
+
+    act(() => {
+      div.querySelector('button[aria-label="Horseshoes and hand grenades scoring"]')
+        .dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(50);
+    });
+    expect(errors).toEqual([]);
+    expect(document.querySelectorAll('.tooltip')).toHaveLength(0);
+  } finally {
+    vi.useRealTimers();
+    window.removeEventListener('error', onError);
+    unmount(div);
+  }
 });

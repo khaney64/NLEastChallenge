@@ -138,7 +138,7 @@ React 17 and react-router 5 are out of active support. Reactstrap 8 also needs a
   - The `Standings` instance comes from a ref instead of the `ReactDOM.render` return value.
   - `explains horseshoes score colors` now looks up the scoring button after the mode switch. The old button is unmounted by the reload, and only `Simulate` could still click a detached node.
 - [x] Verify (2026-10-23):
-  - `npm test`: 14/14 pass
+  - `npm test`: 18/18 pass
   - `npm run lint`: 0 errors, the same 9 existing `class=` warnings
   - `npm audit`: 0 vulnerabilities
   - `npm run build`: no `.map` files. JS is 314 kB (100 kB gzipped), up from 245 kB (77 kB) because of `react-dom` 19 and Popper.

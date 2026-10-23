@@ -168,12 +168,20 @@ function TooltipCell({ column, rowIndex, colIndex, mode }) {
         if (!tooltipText) {
             return undefined;
         }
-        const tooltip = new Tooltip(cellRef.current, { title: tooltipText, placement: 'top', trigger: 'hover focus click' });
+        const cell = cellRef.current;
+        const tooltip = new Tooltip(cell, { title: tooltipText, placement: 'top', trigger: 'hover focus click' });
+        // A re-show replaces a fading tip without cancelling its hide, so track every tip that starts hiding.
+        const hidingTips = new Set();
+        const onHide = () => tooltip.tip && hidingTips.add(tooltip.tip);
+        cell.addEventListener('hide.bs.tooltip', onHide);
         return () => {
+            cell.removeEventListener('hide.bs.tooltip', onHide);
             // A tip without 'show' is mid fade-out; Bootstrap would run that hide's completion on the
-            // disposed instance and throw, so finish the hide now (its transitionend handler) before disposing.
-            if (tooltip.tip && !tooltip.tip.classList.contains('show')) {
-                tooltip.tip.dispatchEvent(new Event('transitionend'));
+            // disposed instance and throw, so finish each pending hide (its transitionend handler) before disposing.
+            for (const tip of hidingTips) {
+                if (!tip.classList.contains('show')) {
+                    tip.dispatchEvent(new Event('transitionend'));
+                }
             }
             tooltip.dispose();
         };
