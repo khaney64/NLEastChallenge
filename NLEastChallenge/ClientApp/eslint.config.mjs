@@ -27,7 +27,6 @@ export default [
       ...react.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
       'react/prop-types': 'off',
-      'react/no-unknown-property': 'warn',
       'no-use-before-define': 'off',
       'no-unused-vars': ['warn', { args: 'none', ignoreRestSiblings: true }],
     },

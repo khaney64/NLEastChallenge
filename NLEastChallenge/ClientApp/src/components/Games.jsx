@@ -138,21 +138,21 @@ function getOuts(game) {
         if (game.outs === 0) {
             return (
                 <div>
-                    <div class="dotOff"></div><div class="dotOff"></div><div class="dotOff"></div>
+                    <div className="dotOff"></div><div className="dotOff"></div><div className="dotOff"></div>
                 </div>
             );
         }
         if (game.outs === 1) {
             return (
                 <div>
-                    <div class="dotOn"></div><div class="dotOff"></div><div class="dotOff"></div>
+                    <div className="dotOn"></div><div className="dotOff"></div><div className="dotOff"></div>
                 </div>
         );
         }
         if (game.outs === 2) {
             return (
                 <div>
-                    <div class="dotOn"></div><div class="dotOn"></div><div class="dotOff"></div>
+                    <div className="dotOn"></div><div className="dotOn"></div><div className="dotOff"></div>
                 </div>
         );
         }

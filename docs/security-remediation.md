@@ -83,6 +83,7 @@ This is the root-cause fix and should clear most of the 86 alerts. Scope is the 
   - All 8 tests must pass.
 - [x] Lint: replace `eslint-config-react-app` / eslint 7 / `eslint-plugin-flowtype` with eslint 9 flat config based on 3H.Admin's `eslint.config.mjs`, or drop the `lint` script. Either is fine; record which in the PR.
   - 2026-10-22: kept lint on eslint 9 flat config (`eslint.config.mjs`). Existing `class=` attributes in `Games.jsx` surface as `react/no-unknown-property` warnings, left unfixed (out of scope).
+  - 2026-10-23: fixed. `Games.jsx` `getOuts` now uses `className`, `react/no-unknown-property` is back to an error, and `npm run lint` reports 0 problems. A test covers the outs dots and fails on the old code with React's "Invalid DOM property `class`" warning.
 - [x] Remove unused dependencies: `oidc-client`, `jquery`, `merge`, `rimraf`, `web-vitals`, `nan`, `ajv`, `typescript`, `cross-env`, `@babel/plugin-proposal-private-property-in-object`, and the `overrides` block. None appear in the live bundle; confirm with a project-wide search before deleting.
 - [x] Scripts: `"start": "vite"`, `"build": "vite build"`, `"test": "vitest run"`. `SpaProxyLaunchCommand` stays `npm start`.
 - [x] Update CLAUDE.md and AGENTS.md: the Tech Stack and Build & Run sections say "Jest tests" and describe CRA.

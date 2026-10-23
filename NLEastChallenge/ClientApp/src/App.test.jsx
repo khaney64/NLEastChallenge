@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { MemoryRouter } from 'react-router';
 import App from './App';
 import Standings from './components/Standings';
+import Games from './components/Games';
 
 const normalDivisionData = {
   headers: ['Actual', 'Record', 'Streak', 'Greg'],
@@ -374,6 +375,27 @@ it('disposes wins guess tooltip after a re-show replaced its fading tip without 
   } finally {
     vi.useRealTimers();
     window.removeEventListener('error', onError);
+    unmount(div);
+  }
+});
+
+it.each([0, 1, 2])('shows %i of 3 outs for a game in progress without DOM property warnings', async (outs) => {
+  const div = document.createElement('div');
+  const game = { awayTeam: 'ATL', homeTeam: 'PHI', status: 'In Progress', awayScore: 2, homeScore: 1, inning: 'Top 5', outs };
+  global.fetch = vi.fn(() => Promise.resolve({ json: () => Promise.resolve([game]) }));
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+  try {
+    await act(async () => {
+      render(<Games />, div);
+      await flushPendingPromises();
+    });
+
+    expect(div.querySelectorAll('.dotOn')).toHaveLength(outs);
+    expect(div.querySelectorAll('.dotOff')).toHaveLength(3 - outs);
+    expect(consoleError).not.toHaveBeenCalled();
+  } finally {
+    consoleError.mockRestore();
     unmount(div);
   }
 });
