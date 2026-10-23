@@ -1,5 +1,5 @@
-import React, { Component, useState } from 'react';
-import { Tooltip } from 'reactstrap';
+import React, { Component, useEffect, useRef } from 'react';
+import Tooltip from 'bootstrap/js/dist/tooltip';
 import horseshoeIcon from '../images/horseshoe.png';
 
 export class Standings extends Component {
@@ -159,10 +159,33 @@ function ScoringDetails({ mode }) {
 }
 
 function TooltipCell({ column, rowIndex, colIndex, mode }) {
-    const [tooltipOpen, setTooltipOpen] = useState(false);
-    const toggle = () => setTooltipOpen(!tooltipOpen);
+    const cellRef = useRef(null);
     const cellId = `cell-${rowIndex}-${colIndex}`;
     const hasTooltip = column.winsGuess > 0;
+    const tooltipText = hasTooltip ? `${column.winsGuess} wins` : null;
+
+    useEffect(() => {
+        if (!tooltipText) {
+            return undefined;
+        }
+        const cell = cellRef.current;
+        const tooltip = new Tooltip(cell, { title: tooltipText, placement: 'top', trigger: 'hover focus click' });
+        // A re-show replaces a fading tip without cancelling its hide, so track every tip that starts hiding.
+        const hidingTips = new Set();
+        const onHide = () => tooltip.tip && hidingTips.add(tooltip.tip);
+        cell.addEventListener('hide.bs.tooltip', onHide);
+        return () => {
+            cell.removeEventListener('hide.bs.tooltip', onHide);
+            // A tip without 'show' is mid fade-out; Bootstrap would run that hide's completion on the
+            // disposed instance and throw, so finish each pending hide (its transitionend handler) before disposing.
+            for (const tip of hidingTips) {
+                if (!tip.classList.contains('show')) {
+                    tip.dispatchEvent(new Event('transitionend'));
+                }
+            }
+            tooltip.dispose();
+        };
+    }, [tooltipText]);
     const isStreak = column.team === 'Streak';
     const isRecord = column.team === 'Record';
     const isActualTeam = colIndex === 0 && column.record;
@@ -176,21 +199,11 @@ function TooltipCell({ column, rowIndex, colIndex, mode }) {
     return (
         <td
             id={cellId}
+            ref={cellRef}
             className={cls}
         >
             {GetColumnValue(column)}
             {isActualTeam && <span className="mobile-record">{column.record}</span>}
-            {hasTooltip &&
-                <Tooltip
-                    placement="top"
-                    isOpen={tooltipOpen}
-                    target={cellId}
-                    toggle={toggle}
-                    trigger="hover focus click"
-                >
-                    {column.winsGuess} wins
-                </Tooltip>
-            }
         </td>
     );
 }
